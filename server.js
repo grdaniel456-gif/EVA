@@ -161,11 +161,11 @@ server.listen(PORT, () => {
 
 
 
-    // --- RUTA API: REGISTRO Y VALIDACIÓN DE ASISTENCIA ---
+    // --- RUTA API: REGISTRO Y VALIDACIÓN DE ASISTENCIA CON CONTADOR (+1) ---
 app.post('/api/registrar-asistencia', (req, res) => {
     const { matricula, token } = req.body;
 
-    // Verificar si el token enviado coincide con el token activo actual
+    // 1. Validar que el token enviado sea el activo actualmente
     if (!token || token !== tokenActivoActual) {
         return res.status(400).json({ 
             exito: false, 
@@ -173,23 +173,50 @@ app.post('/api/registrar-asistencia', (req, res) => {
         });
     }
 
-// Guardar el registro en el archivo asistencias.json
-    const asistencias = leerJSON('asistencias.json');
-    asistencias.push({
+    // 2. Cargar lista de estudiantes y buscar al alumno logueado
+    const estudiantes = leerJSON('estudiantes.json');
+    const alumnoIndex = estudiantes.findIndex(est => est.matricula === matricula);
+
+    if (alumnoIndex === -1) {
+        return res.status(404).json({
+            exito: false,
+            mensaje: 'Estudiante no encontrado.'
+        });
+    }
+
+    // 3. Incrementar el contador de asistencias +1
+    // Si la propiedad no existe aún en el alumno, la inicializamos en 1, si no, le sumamos 1
+    if (!estudiantes[alumnoIndex].asistencias) {
+        estudiantes[alumnoIndex].asistencias = 1;
+    } else {
+        estudiantes[alumnoIndex].asistencias += 1;
+    }
+
+    // Guardar los cambios actualizados en estudiantes.json
+    guardarJSON('estudiantes.json', estudiantes);
+
+    // 4. Guardar también en el registro de historial asistencias.json (opcional pero recomendado)
+    const asistenciasHistorial = leerJSON('asistencias.json');
+    asistenciasHistorial.push({
         id: Date.now(),
         matricula: matricula,
         fecha: new Date().toLocaleString()
     });
-    guardarJSON('asistencias.json', asistencias);
+    guardarJSON('asistencias.json', asistenciasHistorial);
 
-    // 1. Quemamos/Invalidamos el token generando uno totalmente nuevo
+    // 5. Invalidad/Quemar el token actual creando uno nuevo
     tokenActivoActual = generarTokenUnico();
 
-    // 2. Transmitimos vía WebSockets al panel del docente para refrescar la pantalla en tiempo real
+    // 6. Transmitir por WebSockets al proyector/pantalla del docente para cambiar el QR
     io.emit('actualizar_qr', { 
         token: tokenActivoActual,
         ultimoAlumno: matricula 
     });
 
-    return res.json({ exito: true, mensaje: 'Asistencia registrada exitosamente.' });
+    // 7. Responder al celular del alumno con el nuevo total de asistencias
+    return res.json({ 
+        exito: true, 
+        mensaje: '¡Asistencia registrada con éxito!',
+        totalAsistencias: estudiantes[alumnoIndex].asistencias
+    });
 });
