@@ -16,7 +16,7 @@
         <form class="card-body" action="/api/registro" method="POST" id="registroForm">
             <h2>Crear Cuenta de Estudiante</h2>
 
-            <!-- Envío implícito del rol al backend -->
+            <!-- Envío del rol implícito -->
             <input type="hidden" name="rol" value="estudiante">
 
             <!-- Nombre completo -->
@@ -25,16 +25,35 @@
                 <input type="text" id="reg-nombre" name="nombre" required placeholder="Tu nombre y apellidos">
             </div>
 
-            <!-- Matrícula -->
-            <div class="input-group" id="field-reg-matricula">
-                <label for="reg-matricula">Matrícula:</label>
-                <input type="text" id="reg-matricula" name="matricula" required placeholder="Ej. ii231841">
+            <!-- Matrícula (Restringida a exactamente 8 dígitos) -->
+            <div class="input-group">
+                <label for="reg-matricula">Matrícula (8 dígitos):</label>
+                <input type="text" id="reg-matricula" name="matricula" maxlength="8" pattern="\d{8}" title="La matrícula debe contener exactamente 8 números" placeholder="Ej. 12345678" required>
+            </div>
+
+            <!-- Género -->
+            <div class="input-group">
+                <label for="reg-genero">Género:</label>
+                <select id="reg-genero" name="genero" required>
+                    <option value="" disabled selected>Selecciona una opción...</option>
+                    <option value="H">Hombre (H)</option>
+                    <option value="M">Mujer (M)</option>
+                </select>
+            </div>
+
+            <!-- Modalidad -->
+            <div class="input-group">
+                <label for="reg-modalidad">Modalidad:</label>
+                <select id="reg-modalidad" name="modalidad" required>
+                    <option value="N">Normal (N)</option>
+                    <option value="D">Dual (D)</option>
+                </select>
             </div>
 
             <!-- Contraseña -->
             <div class="input-group">
                 <label for="reg-password">Contraseña:</label>
-                <input type="password" id="reg-password" name="password" required>
+                <input type="password" id="reg-password" name="password" required placeholder="Ingresa tu contraseña">
             </div>
 
             <button type="submit" class="btn-submit">Registrarme</button>
