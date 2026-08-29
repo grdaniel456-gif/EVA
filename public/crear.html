@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Registro Estudiante - ITSA</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="login-card">
+        <header class="card-header">
+            <img src="/Logo-Escuela.png" alt="Logo ITSA" class="logo">
+            <h1 class="header-title">Instituto Tecnológico Superior de Atlixco</h1>
+        </header>
+
+        <form class="card-body" action="/api/registro" method="POST" id="registroForm">
+            <h2>Crear Cuenta de Estudiante</h2>
+
+            <input type="hidden" name="rol" value="estudiante">
+
+            <!-- Nombre completo -->
+            <div class="input-group">
+                <label for="reg-nombre">Nombre completo:</label>
+                <input type="text" id="reg-nombre" name="nombre" required placeholder="Tu nombre y apellidos">
+            </div>
+
+            <!-- Matrícula (Restringida a 8 dígitos numéricos) -->
+            <div class="input-group">
+                <label for="reg-matricula">Matrícula (8 dígitos):</label>
+                <input type="text" id="reg-matricula" name="matricula" maxlength="8" pattern="\d{8}" title="La matrícula debe tener exactamente 8 números" placeholder="Ej. 12345678" required>
+            </div>
+
+            <!-- Género -->
+            <div class="input-group">
+                <label for="reg-genero">Género:</label>
+                <select id="reg-genero" name="genero" required>
+                    <option value="" disabled selected>Selecciona una opción...</option>
+                    <option value="H">Hombre (H)</option>
+                    <option value="M">Mujer (M)</option>
+                </select>
+            </div>
+
+            <!-- Modalidad -->
+            <div class="input-group">
+                <label for="reg-modalidad">Modalidad:</label>
+                <select id="reg-modalidad" name="modalidad" required>
+                    <option value="N">Normal (N)</option>
+                    <option value="D">Dual (D)</option>
+                </select>
+            </div>
+
+            <!-- Contraseña -->
+            <div class="input-group">
+                <label for="reg-password">Contraseña:</label>
+                <input type="password" id="reg-password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Registrarme</button>
+
+            <div class="card-footer">
+                <p>¿Ya tienes cuenta? <a href="/index.html">Iniciar sesión</a></p>
+            </div>
+        </form>
+    </main>
+</body>
+</html>
