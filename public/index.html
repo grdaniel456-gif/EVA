@@ -3,64 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Instituto Tecnológico Superior de Atlixco</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Solicitar Registro Estudiante - ITSA</title>
+    <link rel="stylesheet" href="registros.css">
 </head>
 <body>
-
     <main class="login-card">
         <header class="card-header">
-            <img src="Logo-Escuela.png" alt="Logo ITSA" class="logo">
+            <img src="/Logo-Escuela.png" alt="Logo ITSA" class="logo">
             <h1 class="header-title">Instituto Tecnológico Superior de Atlixco</h1>
         </header>
 
-        <form class="card-body" action="/login" method="POST" id="loginForm">
-            <h2>Iniciar Sesión</h2>
+        <form class="card-body" action="/api/registro" method="POST" id="registroForm">
+            <h2>Crear Cuenta de Estudiante</h2>
 
-            <!-- Selector de Rol -->
+            <input type="hidden" name="rol" value="estudiante">
+
+            <!-- Nombre completo -->
             <div class="input-group">
-                <label for="rol">Soy:</label>
-                <select id="rol" name="rol" required>
-                    <option value="" disabled selected>Selecciona tu tipo de usuario...</option>
-                    <option value="estudiante">Estudiante</option>
-                    <option value="docente">Docente</option>
+                <label for="reg-nombre">Nombre completo:</label>
+                <input type="text" id="reg-nombre" name="nombre" required placeholder="Tu nombre y apellidos">
+            </div>
+
+            <!-- Matrícula (Restringida a 8 dígitos numéricos) -->
+            <div class="input-group">
+                <label for="reg-matricula">Matrícula (8 dígitos):</label>
+                <input type="text" id="reg-matricula" name="matricula" maxlength="8" pattern="\d{8}" title="La matrícula debe tener exactamente 8 números" placeholder="Ej. 12345678" required>
+            </div>
+
+            <!-- Género -->
+            <div class="input-group">
+                <label for="reg-genero">Género:</label>
+                <select id="reg-genero" name="genero" required>
+                    <option value="" disabled selected>Selecciona una opción...</option>
+                    <option value="H">Hombre (H)</option>
+                    <option value="M">Mujer (M)</option>
                 </select>
             </div>
 
-            <!-- Campos que se muestran/ocultan dinámicamente -->
-            <div id="dynamic-fields" class="hidden">
-                
-                <!-- Campo para Estudiante -->
-                <div class="input-group" id="field-matricula">
-                    <label for="matricula">Matrícula:</label>
-                    <input type="text" id="matricula" name="matricula" placeholder="Ej. ii231841">
-                </div>
-
-                <!-- Campo para Docente -->
-                <div class="input-group hidden" id="field-nombre">
-                    <label for="nombre">Nombre completo/usuario:</label>
-                    <input type="text" id="nombre" name="nombre" placeholder="Ingresa tu nombre completo">
-                </div>
-
-                <!-- Campo Contraseña (Común para ambos) -->
-                <div class="input-group" id="field-password">
-                    <label for="password">Contraseña:</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" name="password" required>
-                        <i class="fa-regular fa-eye toggle-password" id="toggleIcon"></i>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit">Entrar</button>
+            <!-- Modalidad -->
+            <div class="input-group">
+                <label for="reg-modalidad">Modalidad:</label>
+                <select id="reg-modalidad" name="modalidad" required>
+                    <option value="N">Normal (N)</option>
+                    <option value="D">Dual (D)</option>
+                </select>
             </div>
 
+            <!-- Contraseña -->
+            <div class="input-group">
+                <label for="reg-password">Contraseña:</label>
+                <input type="password" id="reg-password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Registrarme</button>
+
             <div class="card-footer">
-                <p>¿No tienes cuenta? <a href="/Registros/registros.html"">Solicitar registro</a></p>
+                <p>¿Ya tienes cuenta? <a href="/index.html">Iniciar sesión</a></p>
             </div>
         </form>
     </main>
-
-    <script src="script.js"></script>
 </body>
 </html>

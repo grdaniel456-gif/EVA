@@ -22,10 +22,10 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// Inicializar tabla de alumnos en PostgreSQL en una sola función
+// Inicializar tabla de alumnos en PostgreSQL
 const inicializarBD = async () => {
     try {
-        // 1. Crear tabla si no existe
+        // 1. Crear tabla base si no existe
         await pool.query(`
             CREATE TABLE IF NOT EXISTS alumnos (
                 matricula VARCHAR(50) PRIMARY KEY,
@@ -34,13 +34,15 @@ const inicializarBD = async () => {
             );
         `);
 
-        // 2. Asegurar que exista la columna password
+        // 2. Asegurar que existan las columnas requeridas
         await pool.query(`
             ALTER TABLE alumnos 
-            ADD COLUMN IF NOT EXISTS password VARCHAR(100);
+            ADD COLUMN IF NOT EXISTS password VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS genero VARCHAR(1),
+            ADD COLUMN IF NOT EXISTS modalidad VARCHAR(1);
         `);
 
-        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con la columna password.');
+        console.log('Tabla "alumnos" en PostgreSQL inicializada con genero y modalidad.');
     } catch (err) {
         console.error('Error inicializando PostgreSQL:', err);
     }
@@ -48,7 +50,7 @@ const inicializarBD = async () => {
 
 inicializarBD();
 
-// Leer JSON únicamente para Docentes (opcional, si aún manejas docentes por JSON)
+// Leer JSON para Docentes
 const leerJSON = (archivo) => {
     const filePath = path.join(__dirname, archivo);
     if (!fs.existsSync(filePath)) {
@@ -75,22 +77,40 @@ io.on('connection', (socket) => {
     });
 });
 
-// --- 4. RUTA DE REGISTRO DE ALUMNOS (Directo a PG) ---
+// --- 4. RUTA DE REGISTRO DE ALUMNOS (Con validaciones de Genero, Modalidad y Matricula de 8 dígitos) ---
 app.post('/api/registro', async (req, res) => {
-    const { matricula, nombre, password } = req.body;
+    let { matricula, nombre, password, genero, modalidad } = req.body;
 
-    if (!matricula || !nombre || !password) {
-        return res.status(400).json({ exito: false, mensaje: 'Matrícula, nombre y contraseña son requeridos.' });
+    if (!matricula || !nombre || !password || !genero || !modalidad) {
+        return res.status(400).json({ exito: false, mensaje: 'Todos los campos son obligatorios.' });
+    }
+
+    // Validación 1: Matrícula exactamente de 8 dígitos numéricos
+    const regexMatricula = /^\d{8}$/;
+    if (!regexMatricula.test(matricula)) {
+        return res.status(400).json({ exito: false, mensaje: 'La matrícula debe contener exactamente 8 dígitos numéricos.' });
+    }
+
+    // Validación 2: Género debe ser 'H' o 'M'
+    genero = genero.toUpperCase();
+    if (genero !== 'H' && genero !== 'M') {
+        return res.status(400).json({ exito: false, mensaje: 'El género debe ser H (Hombre) o M (Mujer).' });
+    }
+
+    // Validación 3: Modalidad debe ser 'D' (Dual) o 'N' (Normal)
+    modalidad = modalidad.toUpperCase();
+    if (modalidad !== 'D' && modalidad !== 'N') {
+        return res.status(400).json({ exito: false, mensaje: 'La modalidad debe ser D (Dual) o N (Normal).' });
     }
 
     try {
         await pool.query(
-            'INSERT INTO alumnos (matricula, nombre, password, asistencias) VALUES ($1, $2, $3, 0)',
-            [matricula, nombre, password]
+            'INSERT INTO alumnos (matricula, nombre, password, genero, modalidad, asistencias) VALUES ($1, $2, $3, $4, $5, 0)',
+            [matricula, nombre, password, genero, modalidad]
         );
-        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente en la base de datos.' });
+        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente.' });
     } catch (err) {
-        if (err.code === '23505') { // Clave duplicada en Postgres
+        if (err.code === '23505') { // Clave duplicada
             return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
         }
         console.error('Error en /api/registro:', err);
@@ -98,13 +118,12 @@ app.post('/api/registro', async (req, res) => {
     }
 });
 
-// --- 5. RUTA DE LOGIN (Directo en Postgres) ---
+// --- 5. RUTA DE LOGIN ---
 app.post('/login', async (req, res) => {
     const { rol, matricula, nombre, password } = req.body;
 
     if (rol === 'estudiante') {
         try {
-            // Consulta directa a PostgreSQL para validar credenciales
             const result = await pool.query(
                 'SELECT * FROM alumnos WHERE matricula = $1 AND password = $2',
                 [matricula, password]
@@ -130,7 +149,6 @@ app.post('/login', async (req, res) => {
         }
 
     } else if (rol === 'docente') {
-        // Mantiene docentes en JSON por ahora
         const docentes = leerJSON('docentes.json');
         const usuario = docentes.find(doc => doc.nombre.toLowerCase() === nombre.toLowerCase() && doc.password === password);
 
@@ -151,11 +169,10 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1 REAL) ---
+// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA ---
 app.post('/api/registrar-asistencia', async (req, res) => {
     const { matricula, token } = req.body;
 
-    // 1. Validar Token QR
     if (!token || token !== tokenActivoActual) {
         return res.status(400).json({ 
             exito: false, 
@@ -164,7 +181,6 @@ app.post('/api/registrar-asistencia', async (req, res) => {
     }
 
     try {
-        // Sumar +1 asistencia directamente en PostgreSQL
         const updateResult = await pool.query(
             'UPDATE alumnos SET asistencias = asistencias + 1 WHERE matricula = $1 RETURNING *',
             [matricula]
@@ -176,14 +192,12 @@ app.post('/api/registrar-asistencia', async (req, res) => {
 
         const alumno = updateResult.rows[0];
 
-        // 2. Quemar token e informar al docente vía WebSockets
         tokenActivoActual = generarTokenUnico();
         io.emit('actualizar_qr', { 
             token: tokenActivoActual,
             ultimoAlumno: matricula 
         });
 
-        // 3. Responder
         res.json({
             exito: true,
             mensaje: `¡Asistencia registrada para ${alumno.nombre}!`,
@@ -199,7 +213,7 @@ app.post('/api/registrar-asistencia', async (req, res) => {
 // --- 7. CONSULTAR LISTA DE ALUMNOS ---
 app.get('/api/alumnos', async (req, res) => {
     try {
-        const result = await pool.query('SELECT matricula, nombre, asistencias FROM alumnos ORDER BY nombre ASC');
+        const result = await pool.query('SELECT matricula, nombre, asistencias, genero, modalidad FROM alumnos ORDER BY nombre ASC');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ exito: false, mensaje: err.message });
