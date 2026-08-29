@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear Asistencia - EVA</title>
+    <link rel="stylesheet" href="alumno-codigo.css">
+    
+    <!-- Librería para escanear QR con la cámara del celular/navegador -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+    <main class="scanner-container">
+        <h1>Escáner de Asistencia</h1>
+        <p class="instruccion">Apunta con tu cámara al código QR en la pantalla del docente.</p>
+
+        <!-- Botón para iniciar la cámara -->
+        <button id="btn-camara" onclick="iniciarCamara()">📷 Abrir Cámara</button>
+
+        <!-- Visor donde se proyectará la cámara -->
+        <div id="reader" style="display: none;"></div>
+
+        <!-- Mensaje de estado -->
+        <p id="mensaje-estado" class="estado-espera"></p>
+    </main>
+
+    <script src="alumno-codigo.js"></script>
+</body>
+</html>
