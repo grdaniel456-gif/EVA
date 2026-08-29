@@ -16,11 +16,36 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- 1. CONEXIÓN A POSTGRESQL ---
+// --- 1. CONEXIÓN E INICIALIZACIÓN DE POSTGRESQL ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://eva_db_n0jc_user:zosdPzPXVx0e8Rw8ePgibu144pkn8WYX@dpg-da9io1hf2nfc73fmjdeg-a/eva_db_n0jc',
     ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
+
+const inicializarBD = async () => {
+    try {
+        // 1. Crear tabla básica si no existe
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS alumnos (
+                matricula VARCHAR(50) PRIMARY KEY,
+                nombre VARCHAR(100) NOT NULL,
+                asistencias INT DEFAULT 0
+            );
+        `);
+
+        // 2. Agregar la columna "password" si aún no existe en la tabla existente
+        await pool.query(`
+            ALTER TABLE alumnos 
+            ADD COLUMN IF NOT EXISTS password VARCHAR(100);
+        `);
+
+        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con la columna password.');
+    } catch (err) {
+        console.error('Error inicializando PostgreSQL:', err);
+    }
+};
+
+inicializarBD();
 
 // Inicializar tabla de alumnos en PostgreSQL
 const inicializarBD = async () => {
@@ -86,7 +111,8 @@ app.post('/api/registro', async (req, res) => {
         if (err.code === '23505') { // Clave duplicada en Postgres
             return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
         }
-        res.status(500).json({ exito: false, mensaje: 'Error al registrar alumno.' });
+        console.error('Error en /api/registro:', err);
+        res.status(500).json({ exito: false, mensaje: 'Error interno al registrar alumno.' });
     }
 });
 
