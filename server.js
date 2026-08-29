@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-const Datastore = require('nedb-promises');
+const { Pool } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,8 +16,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- 1. BASE DE DATOS (NeDB - 100% JS Puro para Render) ---
-const dbAlumnos = Datastore.create({ filename: path.join(__dirname, 'alumnos.db'), autoload: true });
+// --- 1. CONEXIÓN A POSTGRESQL ---
+// Toma la URL automáticamente desde Render o la variable de entorno
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL || 'postgresql://eva_db_n0jc_user:zosdPzPXVx0e8Rw8ePgibu144pkn8WYX@dpg-da9io1hf2nfc73fmjdeg-a/eva_db_n0jc',
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
+
+// Crear tabla de alumnos automáticamente si no existe
+pool.query(`
+    CREATE TABLE IF NOT EXISTS alumnos (
+        matricula VARCHAR(50) PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL,
+        asistencias INT DEFAULT 0
+    );
+`).then(() => console.log('Tabla "alumnos" en PostgreSQL lista.'))
+  .catch(err => console.error('Error inicializando PostgreSQL:', err));
+
 
 // --- 2. LÓGICA DE TOKENS (QR en tiempo real) ---
 let tokenActivoActual = null;
@@ -34,11 +49,6 @@ const leerJSON = (archivo) => {
     }
     const data = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(data || '[]');
-};
-
-const guardarJSON = (archivo, datos) => {
-    const filePath = path.join(__dirname, archivo);
-    fs.writeFileSync(filePath, JSON.stringify(datos, null, 2));
 };
 
 // --- 3. WEBSOCKETS (SOCKET.IO) ---
@@ -60,14 +70,15 @@ app.post('/api/registro', async (req, res) => {
     }
 
     try {
-        const existe = await dbAlumnos.findOne({ _id: matricula });
-        if (existe) {
+        await pool.query(
+            'INSERT INTO alumnos (matricula, nombre, asistencias) VALUES ($1, $2, 0)',
+            [matricula, nombre]
+        );
+        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente en la base de datos.' });
+    } catch (err) {
+        if (err.code === '23505') { // Código de error de clave duplicada en PG
             return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
         }
-
-        await dbAlumnos.insert({ _id: matricula, nombre, asistencias: 0 });
-        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente.' });
-    } catch (err) {
         res.status(500).json({ exito: false, mensaje: 'Error al registrar alumno.' });
     }
 });
@@ -113,8 +124,7 @@ app.post('/login', (req, res) => {
     }
 });
 
-// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1) ---
-// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1 CON AUTO-BÚSQUEDA) ---
+// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1 REAL) ---
 app.post('/api/registrar-asistencia', async (req, res) => {
     const { matricula, token } = req.body;
 
@@ -127,55 +137,55 @@ app.post('/api/registrar-asistencia', async (req, res) => {
     }
 
     try {
-        // Intentar buscar al alumno en la base de datos NeDB
-        let alumno = await dbAlumnos.findOne({ _id: matricula });
+        // Buscar alumno en PostgreSQL
+        let result = await pool.query('SELECT * FROM alumnos WHERE matricula = $1', [matricula]);
+        let alumno = result.rows[0];
 
-        // 💡 SI NO EXISTE EN NEDB, LO BUSCAMOS EN estudiantes.json Y LO CREAMOS
+        // Si no existe en PG, lo creamos con su nombre de estudiantes.json
         if (!alumno) {
             const estudiantesJSON = leerJSON('estudiantes.json');
             const enJSON = estudiantesJSON.find(e => e.matricula === matricula);
-            
-            // Si estaba en el JSON usamos su nombre real, si no, le asignamos uno por defecto
             const nombreAlumno = enJSON ? enJSON.nombre : `Estudiante ${matricula}`;
 
-            // Crear el registro en la base de datos con su primera asistencia (+1)
-            alumno = await dbAlumnos.insert({ 
-                _id: matricula, 
-                nombre: nombreAlumno, 
-                asistencias: 1 
-            });
+            const insertResult = await pool.query(
+                'INSERT INTO alumnos (matricula, nombre, asistencias) VALUES ($1, $2, 1) RETURNING *',
+                [matricula, nombreAlumno]
+            );
+            alumno = insertResult.rows[0];
         } else {
-            // Si ya existía en NeDB, le incrementamos +1
-            await dbAlumnos.update({ _id: matricula }, { $inc: { asistencias: 1 } });
+            // Si ya existe, le sumamos +1 asistencia
+            const updateResult = await pool.query(
+                'UPDATE alumnos SET asistencias = asistencias + 1 WHERE matricula = $1 RETURNING *',
+                [matricula]
+            );
+            alumno = updateResult.rows[0];
         }
 
-        // 2. Quemar el token QR e informar al docente por WebSocket en tiempo real
+        // 2. Quemar token e informar al docente vía WebSockets
         tokenActivoActual = generarTokenUnico();
         io.emit('actualizar_qr', { 
             token: tokenActivoActual,
             ultimoAlumno: matricula 
         });
 
-        // 3. Obtener el registro actualizado para devolver el conteo exacto
-        const alumnoActualizado = await dbAlumnos.findOne({ _id: matricula });
-
+        // 3. Responder
         res.json({
             exito: true,
-            mensaje: `¡Asistencia registrada para ${alumnoActualizado.nombre}!`,
-            totalAsistencias: alumnoActualizado.asistencias
+            mensaje: `¡Asistencia registrada para ${alumno.nombre}!`,
+            totalAsistencias: alumno.asistencias
         });
 
     } catch (err) {
-        console.error('Error al registrar asistencia:', err);
-        res.status(500).json({ exito: false, mensaje: 'Error interno del servidor al actualizar asistencia.' });
+        console.error('Error en PostgreSQL:', err);
+        res.status(500).json({ exito: false, mensaje: 'Error al registrar la asistencia.' });
     }
 });
 
 // --- 7. CONSULTAR BASE DE DATOS DE ALUMNOS ---
 app.get('/api/alumnos', async (req, res) => {
     try {
-        const alumnos = await dbAlumnos.find({});
-        res.json(alumnos);
+        const result = await pool.query('SELECT matricula, nombre, asistencias FROM alumnos ORDER BY nombre ASC');
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ exito: false, mensaje: err.message });
     }
@@ -185,3 +195,27 @@ app.get('/api/alumnos', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
