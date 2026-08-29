@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Instituto Tecnológico Superior de Atlixco</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="login-card">
+        <header class="card-header">
+            <img src="Logo-Escuela.png" alt="Logo ITSA" class="logo">
+            <h1 class="header-title">Instituto Tecnológico Superior de Atlixco</h1>
+        </header>
+
+        <form class="card-body" action="/login" method="POST" id="loginForm">
+            <h2>Iniciar Sesión</h2>
+
+            <!-- Selector de Rol -->
+            <div class="input-group">
+                <label for="rol">Soy:</label>
+                <select id="rol" name="rol" required>
+                    <option value="" disabled selected>Selecciona tu tipo de usuario...</option>
+                    <option value="estudiante">Estudiante</option>
+                    <option value="docente">Docente</option>
+                </select>
+            </div>
+
+            <!-- Campos que se muestran/ocultan dinámicamente -->
+            <div id="dynamic-fields" class="hidden">
+                
+                <!-- Campo para Estudiante -->
+                <div class="input-group" id="field-matricula">
+                    <label for="matricula">Matrícula:</label>
+                    <input type="text" id="matricula" name="matricula" placeholder="Ej. ii231841">
+                </div>
+
+                <!-- Campo para Docente -->
+                <div class="input-group hidden" id="field-nombre">
+                    <label for="nombre">Nombre completo/usuario:</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ingresa tu nombre completo">
+                </div>
+
+                <!-- Campo Contraseña (Común para ambos) -->
+                <div class="input-group" id="field-password">
+                    <label for="password">Contraseña:</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required>
+                        <i class="fa-regular fa-eye toggle-password" id="toggleIcon"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Entrar</button>
+            </div>
+
+            <div class="card-footer">
+                <p>¿No tienes cuenta? <a href="/Registros/registros.html"">Solicitar registro</a></p>
+            </div>
+        </form>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

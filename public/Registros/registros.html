@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Registro Estudiante - ITSA</title>
+    <link rel="stylesheet" href="registros.css">
+</head>
+<body>
+    <main class="login-card">
+        <header class="card-header">
+            <img src="/Logo-Escuela.png" alt="Logo ITSA" class="logo">
+            <h1 class="header-title">Instituto Tecnológico Superior de Atlixco</h1>
+        </header>
+
+        <form class="card-body" action="/api/registro" method="POST" id="registroForm">
+            <h2>Crear Cuenta de Estudiante</h2>
+
+            <!-- Envío implícito del rol al backend -->
+            <input type="hidden" name="rol" value="estudiante">
+
+            <!-- Nombre completo -->
+            <div class="input-group">
+                <label for="reg-nombre">Nombre completo:</label>
+                <input type="text" id="reg-nombre" name="nombre" required placeholder="Tu nombre y apellidos">
+            </div>
+
+            <!-- Matrícula -->
+            <div class="input-group" id="field-reg-matricula">
+                <label for="reg-matricula">Matrícula:</label>
+                <input type="text" id="reg-matricula" name="matricula" required placeholder="Ej. ii231841">
+            </div>
+
+            <!-- Contraseña -->
+            <div class="input-group">
+                <label for="reg-password">Contraseña:</label>
+                <input type="password" id="reg-password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Registrarme</button>
+
+            <div class="card-footer">
+                <p>¿Ya tienes cuenta? <a href="/index.html">Iniciar sesión</a></p>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

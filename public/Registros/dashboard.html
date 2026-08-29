@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Alumno - EVA ITSA</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+    <div class="dashboard-layout">
+        
+        <!-- Barra Lateral Navegación -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="brand">
+                    <div class="brand-text">
+                        <h2>EVA ITSA</h2>
+                        <span>Plataforma Académica</span>
+                    </div>
+                </div>
+
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item active"><a href="#">Inicio</a></li>
+                        <li class="nav-item"><a href="#">Horarios</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+                <button class="btn-logout" onclick="window.location.href='/index.html'">Cerrar Sesión</button>
+            </div>
+        </aside>
+
+        <!-- Área Principal de Contenido -->
+        <div class="main-wrapper">
+            
+            <!-- Barra Superior Header -->
+            <header class="topbar">
+                <h3>Instituto Tecnológico Superior de Atlixco</h3>
+                <div class="user-quick-info">
+                    <div class="user-avatar" id="avatarIcon">U</div>
+                    <span id="topUsername">Cargando...</span>
+                </div>
+            </header>
+
+            <!-- Contenido del Dashboard -->
+            <main class="content-area">
+                
+                <div class="welcome-header">
+                    <h1>Bienvenido a tu Panel Principal</h1>
+                    <p>Consulta tu estado académico e información registrada.</p>
+                </div>
+
+                <!-- Tarjetas Rápidas de Resumen -->
+                <div class="info-cards-grid">
+                    <div class="info-card">
+                        <div class="card-icon">ID</div>
+                        <div class="card-details">
+                            <span>Matrícula</span>
+                            <h3 id="cardMatricula">---</h3>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">STATUS</div>
+                        <div class="card-details">
+                            <span>Estado Académico</span>
+                            <h3 style="color: #38a169;">Activo</h3>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">DOC</div>
+                        <div class="card-details">
+                            <span>Período</span>
+                            <h3>2026-1</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles del Expediente -->
+                <section class="profile-section">
+                    <h2>Información del Usuario</h2>
+                    <table class="data-table">
+                        <tbody>
+                            <tr>
+                                <td class="label">Nombre del Alumno:</td>
+                                <td id="displayNombre">Cargando...</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Matrícula / Identificador:</td>
+                                <td id="displayMatricula">Cargando...</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Institución:</td>
+                                <td>Instituto Tecnológico Superior de Atlixco</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Sistema:</td>
+                                <td>Control Escolar EVA</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+            </main>
+        </div>
+
+    </div>
+
+    <!-- Script para leer los parámetros Query de la URL (nombre y matrícula) -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const nombre = urlParams.get('nombre') || 'Usuario Demo';
+        const matricula = urlParams.get('matricula') || 'N/A';
+
+        // Inyección de los datos dinámicos extraídos de la URL
+        document.getElementById('displayNombre').textContent = nombre;
+        document.getElementById('displayMatricula').textContent = matricula;
+        document.getElementById('topUsername').textContent = nombre;
+        document.getElementById('cardMatricula').textContent = matricula;
+        document.getElementById('avatarIcon').textContent = nombre.charAt(0).toUpperCase();
+    </script>
+</body>
+</html>

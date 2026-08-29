@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Docente - EVA ITSA</title>
+    <link rel="stylesheet" href="docente.css">
+</head>
+<body>
+
+    <div class="dashboard-layout">
+        
+        <!-- Área Principal de Contenido (Izquierda) -->
+        <div class="main-wrapper">
+            
+            <!-- Barra Superior Header -->
+            <header class="topbar">
+                <h3>Instituto Tecnológico Superior de Atlixco</h3>
+                <div class="user-quick-info">
+                    <div class="user-avatar" id="avatarIcon">M</div>
+                    <span id="topUsername">Cargando...</span>
+                </div>
+            </header>
+
+            <!-- Contenido del Dashboard -->
+            <main class="content-area">
+                
+                <div class="welcome-header">
+                    <h1>Panel de Docente</h1>
+                    <p>Bienvenido a tu entorno de gestión académica.</p>
+                </div>
+
+                <!-- Tarjetas Rápidas de Resumen -->
+                <div class="info-cards-grid">
+                    
+                    <div class="info-card">
+                        <div class="card-icon">STATUS</div>
+                        <div class="card-details">
+                            <span>Estado Académico</span>
+                            <h3 style="color: #38a169;">Activo</h3>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon">DOC</div>
+                        <div class="card-details">
+                            <span>Período</span>
+                            <h3>2026-1</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles del Expediente -->
+                <section class="profile-section">
+                    <h2>Información del Maestro</h2>
+                    <table class="data-table">
+                        <tbody>
+                            <tr>
+                                <td class="label">Nombre:</td>
+                                <td id="displayNombre">Cargando...</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Institución:</td>
+                                <td>Instituto Tecnológico Superior de Atlixco</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+            </main>
+        </div>
+
+        <!-- Barra Lateral Navegación (Derecha) -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="brand">
+                    <div class="brand-text">
+                        <h2>EVA ITSA</h2>
+                        <span>Portal Docente</span>
+                    </div>
+                </div>
+
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item active"><a href="#">Carreras</a></li>
+                        <li class="nav-item "><a href="#">Materias</a></li>
+                        <li class="nav-item "><a href="#">Grupos</a></li>
+                        <li class="nav-item"><a href="#">Horarios</a></li>
+                        <li class="nav-item"><a href="#">Seguimiento</a></li>
+                        <li class="nav-item "><a href="/Docente/codigos/codigos.html">Generar código</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+                <button class="btn-logout" onclick="window.location.href='/index.html'">Cerrar Sesión</button>
+            </div>
+        </aside>
+
+    </div>
+
+    <script src="docente.js"></script>
+</body>
+</html>

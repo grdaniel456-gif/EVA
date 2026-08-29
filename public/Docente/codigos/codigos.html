@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Código - EVA ITSA</title>
+    <link rel="stylesheet" href="codigos.css">
+    
+    <!-- Librería Código QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Cliente WebSocket Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <main class="cuadrado-box">
+        <div class="qr-container">
+            <div id="qrcode"></div>
+            <p class="qr-text" id="estado-texto">Esperando escaneo...</p>
+        </div>
+    </main>
+
+    <script src="codigos.js"></script>
+</body>
+</html>
