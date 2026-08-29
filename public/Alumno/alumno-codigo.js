@@ -1,13 +1,16 @@
-// Capturar la matrícula desde los parámetros de la URL (?matricula=2023001)
+// public/Alumno/alumno-codigo.js
+
+// 1. Obtener matrícula de la URL o del sessionStorage si la URL viene limpia
 const urlParams = new URLSearchParams(window.location.search);
-const matriculaAlumno = urlParams.get('matricula');
+const matriculaAlumno = urlParams.get('matricula') || sessionStorage.getItem('matriculaAlumno');
 
 let html5QrcodeScanner = null;
 const mensajeEstado = document.getElementById("mensaje-estado");
 
 function iniciarCamara() {
-    if (!matriculaAlumno) {
-        mensajeEstado.textContent = "❌ Error: No se detectó la matrícula del alumno en la sesión.";
+    // Si no la encuentra en ningún lado, arroja el aviso
+    if (!matriculaAlumno || matriculaAlumno === 'N/A') {
+        mensajeEstado.textContent = "❌ Error: No se detectó la matrícula del alumno en la sesión. Inicia sesión nuevamente.";
         mensajeEstado.className = "estado-error";
         return;
     }
@@ -28,7 +31,6 @@ function iniciarCamara() {
 }
 
 function alEscanearExitoso(decodedText, decodedResult) {
-    // Detener la cámara tras detectar un código
     html5QrcodeScanner.clear();
     document.getElementById("reader").style.display = "none";
     document.getElementById("btn-camara").style.display = "block";
@@ -37,7 +39,6 @@ function alEscanearExitoso(decodedText, decodedResult) {
     mensajeEstado.className = "estado-espera";
 
     try {
-        // Extraer los datos codificados del QR
         const datos = JSON.parse(decodedText);
 
         if (!datos.token) {
@@ -46,7 +47,7 @@ function alEscanearExitoso(decodedText, decodedResult) {
             return;
         }
 
-        // Mandar el token y la matrícula al servidor
+        // Petición al backend en Render
         fetch('/api/registrar-asistencia', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -78,5 +79,5 @@ function alEscanearExitoso(decodedText, decodedResult) {
 }
 
 function alFallarEscaneo(error) {
-    // Se ejecuta continuamente mientras busca un código (no es necesario mostrar alerta)
+    // Silencioso mientras busca QR
 }

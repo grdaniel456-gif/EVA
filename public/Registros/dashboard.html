@@ -110,17 +110,35 @@
     </div>
 
     <!-- Script para leer los parámetros Query de la URL (nombre y matrícula) -->
+   <!-- Script limpio para Dashboard -->
     <script>
+        // 1. Leemos los parámetros que vienen desde la URL del Login
         const urlParams = new URLSearchParams(window.location.search);
         const nombre = urlParams.get('nombre') || 'Usuario Demo';
         const matricula = urlParams.get('matricula') || 'N/A';
 
-        // Inyección de los datos dinámicos extraídos de la URL
+        // 2. Guardamos en la memoria del navegador (sessionStorage)
+        if (matricula && matricula !== 'N/A') {
+            sessionStorage.setItem('matriculaAlumno', matricula);
+            sessionStorage.setItem('nombreAlumno', nombre);
+        }
+
+        // 3. Inyectamos los datos en la pantalla del Dashboard
         document.getElementById('displayNombre').textContent = nombre;
         document.getElementById('displayMatricula').textContent = matricula;
         document.getElementById('topUsername').textContent = nombre;
         document.getElementById('cardMatricula').textContent = matricula;
         document.getElementById('avatarIcon').textContent = nombre.charAt(0).toUpperCase();
+
+        // 4. Actualizamos el botón "Escanear Código" para que mande la matrícula pegada
+        const btnEscanear = document.querySelector('a[href*="alumno-codigo.html"]');
+        if (btnEscanear && matricula !== 'N/A') {
+            btnEscanear.href = `/Alumno/alumno-codigo.html?matricula=${matricula}`;
+        }
     </script>
 </body>
 </html>
+</body>
+</html>
+
+
