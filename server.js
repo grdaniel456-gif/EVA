@@ -152,3 +152,44 @@ app.post('/api/registrar-asistencia', (req, res) => {
 server.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+    // --- RUTA API: REGISTRO Y VALIDACIÓN DE ASISTENCIA ---
+app.post('/api/registrar-asistencia', (req, res) => {
+    const { matricula, token } = req.body;
+
+    // Verificar si el token enviado coincide con el token activo actual
+    if (!token || token !== tokenActivoActual) {
+        return res.status(400).json({ 
+            exito: false, 
+            mensaje: 'El código QR ya no es válido o ya fue escaneado.' 
+        });
+    }
+
+// Guardar el registro en el archivo asistencias.json
+    const asistencias = leerJSON('asistencias.json');
+    asistencias.push({
+        id: Date.now(),
+        matricula: matricula,
+        fecha: new Date().toLocaleString()
+    });
+    guardarJSON('asistencias.json', asistencias);
+
+    // 1. Quemamos/Invalidamos el token generando uno totalmente nuevo
+    tokenActivoActual = generarTokenUnico();
+
+    // 2. Transmitimos vía WebSockets al panel del docente para refrescar la pantalla en tiempo real
+    io.emit('actualizar_qr', { 
+        token: tokenActivoActual,
+        ultimoAlumno: matricula 
+    });
+
+    return res.json({ exito: true, mensaje: 'Asistencia registrada exitosamente.' });
+});
