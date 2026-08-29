@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const fs = require('fs');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+const Datastore = require('nedb-promises');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,20 +16,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- 1. BASE DE DATOS SQLITE ---
-const db = new sqlite3.Database('./datos.db', (err) => {
-    if (err) console.error('Error al conectar con SQLite:', err.message);
-    else console.log('Base de datos SQLite conectada exitosamente.');
-});
-
-// Crear tabla de alumnos si no existe
-db.run(`
-    CREATE TABLE IF NOT EXISTS alumnos (
-        matricula TEXT PRIMARY KEY,
-        nombre TEXT NOT NULL,
-        asistencias INTEGER DEFAULT 0
-    )
-`);
+// --- 1. BASE DE DATOS (NeDB - 100% JS Puro para Render) ---
+const dbAlumnos = Datastore.create({ filename: path.join(__dirname, 'alumnos.db'), autoload: true });
 
 // --- 2. LÓGICA DE TOKENS (QR en tiempo real) ---
 let tokenActivoActual = null;
@@ -63,25 +51,25 @@ io.on('connection', (socket) => {
     });
 });
 
-// --- 4. RUTA DE REGISTRO DE ALUMNOS (SQLITE) ---
-app.post('/api/registro', (req, res) => {
+// --- 4. RUTA DE REGISTRO DE ALUMNOS ---
+app.post('/api/registro', async (req, res) => {
     const { matricula, nombre } = req.body;
 
     if (!matricula || !nombre) {
         return res.status(400).json({ exito: false, mensaje: 'Matrícula y nombre son requeridos.' });
     }
 
-    const query = `INSERT INTO alumnos (matricula, nombre, asistencias) VALUES (?, ?, 0)`;
-    
-    db.run(query, [matricula, nombre], function(err) {
-        if (err) {
-            if (err.message.includes('UNIQUE constraint failed')) {
-                return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
-            }
-            return res.status(500).json({ exito: false, mensaje: 'Error al registrar alumno.' });
+    try {
+        const existe = await dbAlumnos.findOne({ _id: matricula });
+        if (existe) {
+            return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
         }
-        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente en SQLite.' });
-    });
+
+        await dbAlumnos.insert({ _id: matricula, nombre, asistencias: 0 });
+        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente.' });
+    } catch (err) {
+        res.status(500).json({ exito: false, mensaje: 'Error al registrar alumno.' });
+    }
 });
 
 // --- 5. RUTA DE LOGIN ---
@@ -125,8 +113,8 @@ app.post('/login', (req, res) => {
     }
 });
 
-// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1 EN SQLITE Y QR WEB SOCKET) ---
-app.post('/api/registrar-asistencia', (req, res) => {
+// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1) ---
+app.post('/api/registrar-asistencia', async (req, res) => {
     const { matricula, token } = req.body;
 
     // 1. Validar Token QR
@@ -137,17 +125,14 @@ app.post('/api/registrar-asistencia', (req, res) => {
         });
     }
 
-    // 2. Incrementar +1 la asistencia en SQLite
-    const updateQuery = `UPDATE alumnos SET asistencias = asistencias + 1 WHERE matricula = ?`;
-
-    db.run(updateQuery, [matricula], function(err) {
-        if (err) {
-            return res.status(500).json({ exito: false, mensaje: 'Error al actualizar asistencia.' });
-        }
-
-        if (this.changes === 0) {
+    try {
+        const alumno = await dbAlumnos.findOne({ _id: matricula });
+        if (!alumno) {
             return res.status(404).json({ exito: false, mensaje: 'Matrícula no encontrada en la base de datos.' });
         }
+
+        // 2. Incrementar +1 la asistencia
+        await dbAlumnos.update({ _id: matricula }, { $inc: { asistencias: 1 } });
 
         // 3. Quemar token e informar al docente vía WebSocket
         tokenActivoActual = generarTokenUnico();
@@ -156,29 +141,27 @@ app.post('/api/registrar-asistencia', (req, res) => {
             ultimoAlumno: matricula 
         });
 
-        // 4. Obtener total de asistencias actualizado para devolverlo
-        db.get(`SELECT nombre, asistencias FROM alumnos WHERE matricula = ?`, [matricula], (err, row) => {
-            if (err) {
-                return res.status(500).json({ exito: false, mensaje: 'Error al consultar asistencias.' });
-            }
+        // 4. Obtener alumno actualizado para devolver total de asistencias
+        const alumnoActualizado = await dbAlumnos.findOne({ _id: matricula });
 
-            res.json({
-                exito: true,
-                mensaje: `¡Asistencia registrada para ${row.nombre}!`,
-                totalAsistencias: row.asistencias
-            });
+        res.json({
+            exito: true,
+            mensaje: `¡Asistencia registrada para ${alumnoActualizado.nombre}!`,
+            totalAsistencias: alumnoActualizado.asistencias
         });
-    });
+    } catch (err) {
+        res.status(500).json({ exito: false, mensaje: 'Error al actualizar asistencia.' });
+    }
 });
 
 // --- 7. CONSULTAR BASE DE DATOS DE ALUMNOS ---
-app.get('/api/alumnos', (req, res) => {
-    db.all(`SELECT matricula, nombre, asistencias FROM alumnos`, [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ exito: false, mensaje: err.message });
-        }
-        res.json(rows);
-    });
+app.get('/api/alumnos', async (req, res) => {
+    try {
+        const alumnos = await dbAlumnos.find({});
+        res.json(alumnos);
+    } catch (err) {
+        res.status(500).json({ exito: false, mensaje: err.message });
+    }
 });
 
 // --- 8. ARRANCAR SERVIDOR ---
