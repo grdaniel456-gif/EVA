@@ -13,46 +13,58 @@
     <main class="login-card">
         <!-- Encabezado Rojo con Logo y Título -->
         <header class="card-header">
-            <img src="logo-equipo.png" alt="Logo ITSA" class="logo">
+            <img src="Logo-Escuela.png" alt="Logo ITSA" class="logo">
             <h1 class="header-title">Instituto Tecnológico Superior de Atlixco</h1>
         </header>
 
-        <!-- Formulario -->
-        <form class="card-body" action="#" method="POST">
+        <!-- Formulario apuntando correctamente a /login -->
+        <form class="card-body" action="/login" method="POST" id="loginForm">
             <h2>Iniciar Sesión</h2>
 
+            <!-- Selector de Rol Obligatorio -->
             <div class="input-group">
-                <label for="matricula">Matrícula:</label>
-                <input type="text" id="matricula" name="matricula" value="ii231841" required>
+                <label for="rol">Soy:</label>
+                <select id="rol" name="rol" required>
+                    <option value="" disabled selected>Selecciona tu tipo de usuario...</option>
+                    <option value="estudiante">Estudiante</option>
+                    <option value="docente">Docente</option>
+                </select>
             </div>
 
-            <div class="input-group">
-                <label for="password">Contraseña:</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" name="password" value="123" required>
-                    <i class="fa-regular fa-eye toggle-password" id="toggleIcon"></i>
+            <!-- Contenedor dinámico controlado por script.js -->
+            <div id="dynamic-fields" class="hidden">
+                
+                <!-- Campo para Estudiante -->
+                <div class="input-group" id="field-matricula">
+                    <label for="matricula">Matrícula (8 dígitos):</label>
+                    <input type="text" id="matricula" name="matricula" placeholder="Ej. 12345678" maxlength="8">
                 </div>
-            </div>
 
-            <button type="submit" class="btn-submit">Entrar</button>
+                <!-- Campo para Docente -->
+                <div class="input-group hidden" id="field-nombre">
+                    <label for="nombre">Nombre completo/usuario:</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ingresa tu nombre completo">
+                </div>
+
+                <!-- Campo Contraseña -->
+                <div class="input-group" id="field-password">
+                    <label for="password">Contraseña:</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required>
+                        <i class="fa-regular fa-eye toggle-password" id="toggleIcon"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Entrar</button>
+            </div>
 
             <div class="card-footer">
-                <p>¿No tienes cuenta? <a href="/crear.html">Solicitar registro</a></p>
+                <p>¿No tienes cuenta? <a href="/registros.html">Solicitar registro</a></p>
             </div>
         </form>
     </main>
 
-    <script>
-        // Funcionalidad opcional para mostrar/ocultar contraseña al dar clic en el ojo
-        const toggleIcon = document.getElementById('toggleIcon');
-        const passwordInput = document.getElementById('password');
-
-        toggleIcon.addEventListener('click', () => {
-            const isPassword = passwordInput.getAttribute('type') === 'password';
-            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
-            toggleIcon.classList.toggle('fa-eye');
-            toggleIcon.classList.toggle('fa-eye-slash');
-        });
-    </script>
+    <!-- Script externo que maneja la lógica de alternar campos y visibilidad de contraseña -->
+    <script src="script.js"></script>
 </body>
 </html>
