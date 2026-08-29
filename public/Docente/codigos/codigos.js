@@ -1,18 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const socket = io(); // Conexión WebSocket con el servidor
     const qrcodeContainer = document.getElementById("qrcode");
     const estadoTexto = document.getElementById("estado-texto");
-    const TIEMPO_ROTACION_MS = 5000; // 5000 ms = 5 segundos (puedes cambiarlo a 15000 para 15s)
 
-    function generarQRPorTiempo() {
-        qrcodeContainer.innerHTML = "";
-
-        // Generamos un token temporal
-        const tokenUnico = 'TEMP-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    // Función que dibuja el QR en el lienzo HTML
+    function renderizarQR(token) {
+        qrcodeContainer.innerHTML = ""; // Limpiar el QR previo
 
         const payload = JSON.stringify({
             docente: "D-101",
-            token: tokenUnico,
-            modo: "temporizador"
+            token: token
         });
 
         new QRCode(qrcodeContainer, {
@@ -23,17 +20,23 @@ document.addEventListener("DOMContentLoaded", () => {
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
-
-        if (estadoTexto) {
-            estadoTexto.textContent = "Código válido por 10 segundos...";
-        }
     }
 
-    // 1. Generar el primero de inmediato
-    generarQRPorTiempo();
+    // Al abrir la ventana, le pedimos al backend nuestro primer token
+    socket.emit("solicitar_nuevo_qr");
 
-    // 2. Rotar cada 10 segundos automáticos
-    setInterval(() => {
-        generarQRPorTiempo();
-    }, TIEMPO_ROTACION_MS);
+    // Escuchar cuando el servidor notifique que un alumno escaneó el código
+    socket.on("actualizar_qr", (data) => {
+        renderizarQR(data.token);
+
+        if (data.ultimoAlumno) {
+            estadoTexto.textContent = `¡Asistencia de ${data.ultimoAlumno} registrada! Cambiando QR...`;
+            estadoTexto.style.color = "#2e7d32";
+            
+            setTimeout(() => {
+                estadoTexto.textContent = "Esperando escaneo...";
+                estadoTexto.style.color = "#4a5568";
+            }, 3000);
+        }
+    });
 });
