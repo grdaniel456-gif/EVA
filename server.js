@@ -114,6 +114,7 @@ app.post('/login', (req, res) => {
 });
 
 // --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1) ---
+// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA (+1 CON AUTO-BÚSQUEDA) ---
 app.post('/api/registrar-asistencia', async (req, res) => {
     const { matricula, token } = req.body;
 
@@ -126,22 +127,36 @@ app.post('/api/registrar-asistencia', async (req, res) => {
     }
 
     try {
-        const alumno = await dbAlumnos.findOne({ _id: matricula });
+        // Intentar buscar al alumno en la base de datos NeDB
+        let alumno = await dbAlumnos.findOne({ _id: matricula });
+
+        // 💡 SI NO EXISTE EN NEDB, LO BUSCAMOS EN estudiantes.json Y LO CREAMOS
         if (!alumno) {
-            return res.status(404).json({ exito: false, mensaje: 'Matrícula no encontrada en la base de datos.' });
+            const estudiantesJSON = leerJSON('estudiantes.json');
+            const enJSON = estudiantesJSON.find(e => e.matricula === matricula);
+            
+            // Si estaba en el JSON usamos su nombre real, si no, le asignamos uno por defecto
+            const nombreAlumno = enJSON ? enJSON.nombre : `Estudiante ${matricula}`;
+
+            // Crear el registro en la base de datos con su primera asistencia (+1)
+            alumno = await dbAlumnos.insert({ 
+                _id: matricula, 
+                nombre: nombreAlumno, 
+                asistencias: 1 
+            });
+        } else {
+            // Si ya existía en NeDB, le incrementamos +1
+            await dbAlumnos.update({ _id: matricula }, { $inc: { asistencias: 1 } });
         }
 
-        // 2. Incrementar +1 la asistencia
-        await dbAlumnos.update({ _id: matricula }, { $inc: { asistencias: 1 } });
-
-        // 3. Quemar token e informar al docente vía WebSocket
+        // 2. Quemar el token QR e informar al docente por WebSocket en tiempo real
         tokenActivoActual = generarTokenUnico();
         io.emit('actualizar_qr', { 
             token: tokenActivoActual,
             ultimoAlumno: matricula 
         });
 
-        // 4. Obtener alumno actualizado para devolver total de asistencias
+        // 3. Obtener el registro actualizado para devolver el conteo exacto
         const alumnoActualizado = await dbAlumnos.findOne({ _id: matricula });
 
         res.json({
@@ -149,8 +164,10 @@ app.post('/api/registrar-asistencia', async (req, res) => {
             mensaje: `¡Asistencia registrada para ${alumnoActualizado.nombre}!`,
             totalAsistencias: alumnoActualizado.asistencias
         });
+
     } catch (err) {
-        res.status(500).json({ exito: false, mensaje: 'Error al actualizar asistencia.' });
+        console.error('Error al registrar asistencia:', err);
+        res.status(500).json({ exito: false, mensaje: 'Error interno del servidor al actualizar asistencia.' });
     }
 });
 
