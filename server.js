@@ -24,7 +24,7 @@ const pool = new Pool({
 
 const inicializarBD = async () => {
     try {
-        // 1. Crear tabla básica si no existe
+        // Crear tabla si no existe
         await pool.query(`
             CREATE TABLE IF NOT EXISTS alumnos (
                 matricula VARCHAR(50) PRIMARY KEY,
@@ -33,13 +33,13 @@ const inicializarBD = async () => {
             );
         `);
 
-        // 2. Agregar la columna "password" si aún no existe en la tabla existente
+        // Asegurar que exista la columna password
         await pool.query(`
             ALTER TABLE alumnos 
             ADD COLUMN IF NOT EXISTS password VARCHAR(100);
         `);
 
-        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con la columna password.');
+        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente.');
     } catch (err) {
         console.error('Error inicializando PostgreSQL:', err);
     }
