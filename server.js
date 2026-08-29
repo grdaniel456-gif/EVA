@@ -220,3 +220,91 @@ app.post('/api/registrar-asistencia', (req, res) => {
         totalAsistencias: estudiantes[alumnoIndex].asistencias
     });
 });
+
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const app = express();
+
+app.use(express.json());
+
+// 1. Inicializar/Conectar a la base de datos SQLite (se creará el archivo datos.db)
+const db = new sqlite3.Database('./datos.db', (err) => {
+    if (err) console.error('Error al conectar con SQLite:', err.message);
+    else console.log('Base de datos SQLite conectada exitosamente.');
+});
+
+// 2. Crear la tabla de alumnos si no existe
+db.run(`
+    CREATE TABLE IF NOT EXISTS alumnos (
+        matricula TEXT PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        asistencias INTEGER DEFAULT 0
+    )
+`);
+
+// 3. Endpoint para registrar un alumno (usado en registro.html)[cite: 1, 2]
+app.post('/api/registro', (req, res) => {
+    const { matricula, nombre } = req.body;
+
+    if (!matricula || !nombre) {
+        return res.status(400).json({ exito: false, mensaje: 'Matrícula y nombre son requeridos.' });
+    }
+
+    const query = `INSERT INTO alumnos (matricula, nombre, asistencias) VALUES (?, ?, 0)`;
+    
+    db.run(query, [matricula, nombre], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE constraint failed')) {
+                return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
+            }
+            return res.status(500).json({ exito: false, mensaje: 'Error al registrar alumno.' });
+        }
+        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente.' });
+    });
+});
+
+// 4. Endpoint para registrar la asistencia (+1) al escanear[cite: 1, 2]
+app.post('/api/registrar-asistencia', (req, res) => {
+    const { matricula, token } = req.body; //[cite: 1]
+
+    // Validar token (ejemplo sencillo)[cite: 1]
+    if (!token /* || token !== tokenActivoActual */) {
+        return res.status(400).json({ exito: false, mensaje: 'Token inválido o expirado.' });
+    }
+
+    // Incrementar +1 las asistencias del alumno en la BD
+    const updateQuery = `UPDATE alumnos SET asistencias = asistencias + 1 WHERE matricula = ?`;
+
+    db.run(updateQuery, [matricula], function(err) {
+        if (err) {
+            return res.status(500).json({ exito: false, mensaje: 'Error al actualizar asistencia.' });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ exito: false, mensaje: 'Alumno no encontrado en la base de datos.' });
+        }
+
+        // Obtener el nuevo total de asistencias para devolverlo al cliente[cite: 1]
+        db.get(`SELECT nombre, asistencias FROM alumnos WHERE matricula = ?`, [matricula], (err, row) => {
+            if (err) {
+                return res.status(500).json({ exito: false, mensaje: 'Error al consultar asistencias.' });
+            }
+
+            res.json({
+                exito: true,
+                mensaje: `¡Asistencia registrada para ${row.nombre}!`,
+                totalAsistencias: row.asistencias //[cite: 1]
+            });
+        });
+    });
+});
+
+
+app.get('/api/alumnos', (req, res) => {
+    db.all(`SELECT matricula, nombre, asistencias FROM alumnos`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ exito: false, mensaje: err.message });
+        }
+        res.json(rows);
+    });
+});
