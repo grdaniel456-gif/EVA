@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('totalHombres').textContent = totalHombres;
         document.getElementById('totalMujeres').textContent = totalMujeres;
 
-        // 2. Extraer Apellido Paterno para ordenar A-Z
+        // 2. EXTRAER APELLIDO PATERNO Y ORDENAR A-Z
         const obtenerApellido = (nombreCompleto) => {
             if (!nombreCompleto) return '';
             const partes = nombreCompleto.trim().split(' ');
@@ -42,21 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // Determinar marcas de Sexo (X en columna H o X en columna M)
+            // Determinar sexo del alumno ('X' en H o 'X' en M)
             const gen = String(alumno.genero || '').trim().toUpperCase();
             const marcaH = gen === 'H' ? 'X' : '';
             const marcaM = gen === 'M' ? 'X' : '';
 
-            // Columnas fijas del alumno
-            tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td>${alumno.matricula}</td>
-                <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td class="bg-amarillo-dia">${marcaH}</td>
-                <td class="bg-amarillo-dia">${marcaM}</td>
-            `;
-
-            // Evaluar asistencias (Jueves = Grupal, Lunes = Individual)
+            // EVALUAR ASISTENCIAS DESDE BD
             let asistioJueves = false;
             let asistioLunes = false;
 
@@ -80,33 +71,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- RENDERIZAR LAS 4 SESIONES DEL PARCIAL ---
-            // Estructura por sesión:
-            // 1. FECHA INDIVIDUAL
-            // 2. ASISTENCIA INDIVIDUAL (Rosa)
-            // 3. FECHA GRUPAL
-            // 4. L, M, M, J, V, S (Asistencia Grupal)
+            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO (5 COLUMNAS) ---
+            // 1. Nº | 2. MATRÍCULA | 3. NOMBRE | 4. SEXO H | 5. SEXO M
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${alumno.matricula}</td>
+                <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
+                <td style="font-weight: bold;">${marcaH}</td>
+                <td style="font-weight: bold;">${marcaM}</td>
+            `;
+
+            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS (9 COLUMNAS POR SESIÓN) ---
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
+                    // SESIÓN 1 (Muestra asistencias de Lunes y Jueves)
                     tr.innerHTML += `
-                        <!-- FECHA INDIVIDUAL -->
-                        <td></td>
-                        <!-- ASISTENCIA INDIVIDUAL (Columna Rosa -> 'X' si fue Lunes) -->
-                        <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}">${asistioLunes ? 'X' : ''}</td>
-                        
-                        <!-- FECHA GRUPAL -->
+                        <!-- 1. FECHA INDIVIDUAL -->
                         <td></td>
                         
-                        <!-- ASISTENCIA GRUPAL (L, M, M, J, V, S) -->
+                        <!-- 2. ASISTENCIA INDIVIDUAL (ROSA) -> 'X' si asistió el Lunes -->
+                        <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}" style="font-weight: bold;">${asistioLunes ? 'X' : ''}</td>
+                        
+                        <!-- 3. FECHA GRUPAL -->
                         <td></td>
-                        <td></td>
-                        <td></td>
-                        <td class="${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td>
-                        <td></td>
-                        <td></td>
+                        
+                        <!-- 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, X, J, V, S) -->
+                        <td></td> <!-- L -->
+                        <td></td> <!-- M -->
+                        <td></td> <!-- X -->
+                        <td class="${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td> <!-- J -->
+                        <td></td> <!-- V -->
+                        <td></td> <!-- S -->
                     `;
                 } else {
-                    // Sesiones 2, 3 y 4 en blanco
+                    // SESIONES 2, 3 Y 4 EN BLANCO
                     tr.innerHTML += `
                         <td></td>
                         <td class="bg-rosa-col"></td>
@@ -121,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // COLUMNAS FINALES (Observaciones / Opciones)
+            // --- BLOQUE 3: COLUMNAS FINALES DE OBSERVACIONES (3 COLUMNAS) ---
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -132,6 +130,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al renderizar la tabla de seguimiento:', error);
+        console.error('Error al renderizar el formato:', error);
     }
 });
