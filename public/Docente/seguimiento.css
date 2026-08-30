@@ -1,0 +1,40 @@
+.contenedor-seguimiento {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+#tablaSeguimiento {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#tablaSeguimiento th, #tablaSeguimiento td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+#tablaSeguimiento th {
+    background-color: #800020; /* Color guinda */
+    color: white;
+}
+
+#tablaSeguimiento tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.presente {
+    color: #2e7d32;
+    font-weight: bold;
+    background-color: #e8f5e9;
+}
+
+.ausente {
+    color: #c62828;
+    background-color: #ffebee;
+}
