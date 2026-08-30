@@ -290,7 +290,7 @@ app.get('/api/alumnos', async (req, res) => {
 app.get('/api/seguimiento', async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT matricula, nombre, asistencias, historial_asistencias FROM alumnos'
+            'SELECT matricula, nombre, asistencias, genero, historial_asistencias FROM alumnos'
         );
         res.json(result.rows);
     } catch (err) {
