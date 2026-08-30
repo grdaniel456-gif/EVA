@@ -228,15 +228,21 @@ app.post('/api/registrar-asistencia', async (req, res) => {
         const asistenciasActuales = alumnoResult.rows[0].asistencias || 0;
         const numAsistencia = asistenciasActuales + 1;
 
-        // 2. Formatear la fecha y hora: (ej. asistencia 1: 30-08-2026-08:07)
-        const ahora = new Date();
-        const dia = String(ahora.getDate()).padStart(2, '0');
-        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-        const anio = ahora.getFullYear();
-        const horas = String(ahora.getHours()).padStart(2, '0');
-        const minutos = String(ahora.getMinutes()).padStart(2, '0');
+        // 2. Formatear la fecha y hora en ZONA HORARIA LOCAL (México)
+        const fechaHoraLocal = new Date().toLocaleString('es-MX', {
+            timeZone: 'America/Mexico_City',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
 
-        const fechaFormateada = `${dia}-${mes}-${anio}-${horas}:${minutos}`;
+        // Convierte el formato devuelto "30/08/2026, 08:35" a "30-08-2026-08:35"
+        const [fechaParte, horaParte] = fechaHoraLocal.split(', ');
+        const fechaFormateada = `${fechaParte.replace(/\//g, '-')}-${horaParte}`;
+        
         const nuevoRegistro = `asistencia ${numAsistencia}: ${fechaFormateada}`;
 
         // 3. Sumar +1 y agregar registro en PostgreSQL
