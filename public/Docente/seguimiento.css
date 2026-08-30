@@ -1,40 +1,95 @@
-.contenedor-seguimiento {
-    padding: 20px;
-    font-family: Arial, sans-serif;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f5f7;
+    margin: 20px;
 }
 
-.tabla-contenedor {
-    overflow-x: auto;
+.contenedor-excel {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-#tablaSeguimiento {
-    width: 100%;
+/* Tabla de información general */
+.tabla-info {
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-bottom: 20px;
+    width: 350px;
 }
 
-#tablaSeguimiento th, #tablaSeguimiento td {
-    border: 1px solid #ddd;
-    padding: 8px 12px;
+.tabla-info th, .tabla-info td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.tabla-info th {
+    background-color: #d9ead3; /* Verde claro del excel */
     text-align: center;
 }
 
-#tablaSeguimiento th {
-    background-color: #800020; /* Color guinda */
-    color: white;
+/* Tabla Principal de Seguimiento */
+.scroll-tabla {
+    overflow-x: auto;
 }
 
-#tablaSeguimiento tr:nth-child(even) {
-    background-color: #f9f9f9;
+.tabla-seguimiento {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+    text-align: center;
 }
 
-.presente {
-    color: #2e7d32;
+.tabla-seguimiento th, .tabla-seguimiento td {
+    border: 1px solid #777;
+    padding: 5px;
+}
+
+/* Cabeceras según imagen */
+.header-parcial {
+    background-color: #d9d9d9;
+    font-size: 14px;
     font-weight: bold;
-    background-color: #e8f5e9;
+}
+
+.header-sesion {
+    background-color: #fce5cd;
+}
+
+.header-sesion-ind {
+    background-color: #ea9999;
+}
+
+.bg-grupal {
+    background-color: #fff2cc;
+    font-weight: bold;
+}
+
+.bg-individual {
+    background-color: #e6b8af; /* Tono rosa/magenta como el excel */
+    font-weight: bold;
+    color: #000;
+}
+
+.bg-destacado {
+    background-color: #ffe599;
+    font-weight: bold;
+}
+
+.text-left {
+    text-align: left;
+    padding-left: 8px;
+}
+
+/* Indicadores de Asistencia */
+.presente {
+    background-color: #d9ead3;
+    color: #274e13;
+    font-weight: bold;
 }
 
 .ausente {
-    color: #c62828;
-    background-color: #ffebee;
+    background-color: #f4cccc;
+    color: #cc0000;
 }

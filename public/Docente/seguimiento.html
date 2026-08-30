@@ -3,29 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seguimiento de Asistencias</title>
+    <title>Seguimiento Académico - Tutorías</title>
     <link rel="stylesheet" href="seguimiento.css">
 </head>
 <body>
-    <div class="contenedor-seguimiento">
-        <h2>Reporte de Asistencias por Alumno</h2>
-        <div class="tabla-contenedor">
-            <table id="tablaSeguimiento">
+    <div class="contenedor-excel">
+
+        <!-- BLOQUE 1: INFORMACIÓN GENERAL DE LA TAPA DEL EXCEL -->
+        <table class="tabla-info">
+            <tr>
+                <th colspan="2">INFORMACIÓN GENERAL</th>
+            </tr>
+            <tr>
+                <td>Periodo:</td>
+                <td><strong>Mayo - Agosto 2026</strong></td>
+            </tr>
+            <tr>
+                <td>División:</td>
+                <td><strong>Informática / TIC</strong></td>
+            </tr>
+            <tr>
+                <td>Persona Tutora:</td>
+                <td><strong>Docente Encargado</strong></td>
+            </tr>
+        </table>
+
+        <!-- BLOQUE 2: TABLA DE ASISTENCIAS POR PARCIALES -->
+        <div class="scroll-tabla">
+            <table class="tabla-seguimiento">
                 <thead>
-                    <tr id="filaEncabezado">
-                        <th>Matrícula</th>
-                        <th>Nombre del Alumno</th>
-                        <!-- Las columnas de las fechas se generarán dinámicamente -->
+                    <!-- Fila 1: Encabezado del Parcial -->
+                    <tr>
+                        <th rowspan="4" class="col-num">N°</th>
+                        <th rowspan="4" class="col-mat">MATRÍCULA</th>
+                        <th rowspan="4" class="col-nom">NOMBRE DEL ALUMNO</th>
+                        <th colspan="13" class="header-parcial">PRIMER PARCIAL</th>
+                    </tr>
+                    <!-- Fila 2: Subcabecera de Sesiones -->
+                    <tr>
+                        <th colspan="6" class="header-sesion">SESIÓN 1 (GRUPAL - JUEVES)</th>
+                        <th colspan="7" class="header-sesion-ind">SESIÓN 2 (INDIVIDUAL - LUNES)</th>
+                    </tr>
+                    <!-- Fila 3: Indicador de Modalidad -->
+                    <tr>
+                        <th colspan="6" class="bg-grupal">ASISTENCIA GRUPAL</th>
+                        <th colspan="7" class="bg-individual">ASISTENCIA INDIVIDUAL</th>
+                    </tr>
+                    <!-- Fila 4: Días Hábiles del Excel (L, M, X, J, V, S) -->
+                    <tr>
+                        <th class="col-dia">L</th>
+                        <th class="col-dia">M</th>
+                        <th class="col-dia">X</th>
+                        <th class="col-dia bg-destacado">J</th> <!-- Día Grupal -->
+                        <th class="col-dia">V</th>
+                        <th class="col-dia">S</th>
+
+                        <th class="col-dia bg-destacado">L</th> <!-- Día Individual -->
+                        <th class="col-dia">M</th>
+                        <th class="col-dia">X</th>
+                        <th class="col-dia">J</th>
+                        <th class="col-dia">V</th>
+                        <th class="col-dia">S</th>
+                        <th>OBSERVACIONES</th>
                     </tr>
                 </thead>
-                <tbody id="cuerpoTabla">
-                    <!-- Filas dinámicas -->
+                <tbody id="cuerpoSeguimiento">
+                    <!-- Filas renderizadas mediante JS -->
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Enlace al archivo JavaScript -->
     <script src="seguimiento.js"></script>
 </body>
 </html>
