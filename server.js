@@ -108,7 +108,7 @@ app.post('/api/registro', async (req, res) => {
             'INSERT INTO alumnos (matricula, nombre, password, genero, modalidad, asistencias) VALUES ($1, $2, $3, $4, $5, 0)',
             [matricula, nombre, password, genero, modalidad]
         );
-        res.json({ exito: true, mensaje: 'Estudiante registrado correctamente.' });
+        return res.redirect('/index.html');
     } catch (err) {
         if (err.code === '23505') { // Clave duplicada
             return res.status(400).json({ exito: false, mensaje: 'La matrícula ya está registrada.' });
