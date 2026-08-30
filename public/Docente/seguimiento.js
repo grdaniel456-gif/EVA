@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO DE HOMBRES Y MUJERES
+        // 1. CONTEO DE HOMBRES Y MUJERES PARA INFORMACIÓN GENERAL
         let totalHombres = 0;
         let totalMujeres = 0;
 
@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Escribir los resultados en las celdas de Información General
         document.getElementById('totalEstudiantes').textContent = alumnos.length;
         document.getElementById('totalHombres').textContent = totalHombres;
         document.getElementById('totalMujeres').textContent = totalMujeres;
@@ -30,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return partes[0];
         };
 
-        // Ordenar alfabéticamente A-Z
         alumnos.sort((a, b) => {
             const apellidoA = obtenerApellido(a.nombre);
             const apellidoB = obtenerApellido(b.nombre);
@@ -44,15 +42,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            const gen = String(alumno.genero || 'H').trim().toUpperCase();
-            const esH = gen === 'H' ? 'X' : '';
-            const esM = gen === 'M' ? 'X' : '';
+            // Determinar marcas de Sexo (X en columna H o X en columna M)
+            const gen = String(alumno.genero || '').trim().toUpperCase();
+            const marcaH = gen === 'H' ? 'H' : '';
+            const marcaM = gen === 'M' ? 'M' : '';
 
+            // Columnas fijas del alumno
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${alumno.matricula}</td>
                 <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td>${gen}</td>
+                <td class="bg-amarillo-dia">${marcaH}</td>
+                <td class="bg-amarillo-dia">${marcaM}</td>
             `;
 
             // Evaluar asistencias (Jueves = Grupal, Lunes = Individual)
@@ -66,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const subpartes = partes[1].trim().split('-'); // ["30", "08", "2026", "11:46"]
                         if (subpartes.length >= 3) {
                             const dia = parseInt(subpartes[0], 10);
-                            const mes = parseInt(subpartes[1], 10) - 1; // Mes base 0 en JS
+                            const mes = parseInt(subpartes[1], 10) - 1;
                             const anio = parseInt(subpartes[2], 10);
 
                             const fechaObjeto = new Date(anio, mes, dia);
@@ -79,37 +80,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // RENDERIZAR LAS 4 SESIONES DEL PARCIAL
+            // --- RENDERIZAR LAS 4 SESIONES DEL PARCIAL ---
+            // Estructura por sesión:
+            // 1. FECHA INDIVIDUAL
+            // 2. ASISTENCIA INDIVIDUAL (Rosa)
+            // 3. FECHA GRUPAL
+            // 4. L, M, M, J, V, S (Asistencia Grupal)
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
                     tr.innerHTML += `
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia ${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia">${esH}</td>
-                        <td class="bg-amarillo-dia">${esM}</td>
-                        <!-- COLUMNA ROSA (INDIVIDUAL): SE RELLENA CON 'X' SI ASISTIÓ EL LUNES -->
+                        <!-- FECHA INDIVIDUAL -->
+                        <td></td>
+                        <!-- ASISTENCIA INDIVIDUAL (Columna Rosa -> 'X' si fue Lunes) -->
                         <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}">${asistioLunes ? 'X' : ''}</td>
+                        
+                        <!-- FECHA GRUPAL -->
+                        <td></td>
+                        
+                        <!-- ASISTENCIA GRUPAL (L, M, M, J, V, S) -->
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td>
+                        <td></td>
+                        <td></td>
                     `;
                 } else {
+                    // Sesiones 2, 3 y 4 en blanco
                     tr.innerHTML += `
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
+                        <td></td>
                         <td class="bg-rosa-col"></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                     `;
                 }
             }
 
-            // COLUMNAS FINALES (Observaciones)
+            // COLUMNAS FINALES (Observaciones / Opciones)
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -120,6 +132,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al cargar datos de seguimiento:', error);
+        console.error('Error al renderizar la tabla de seguimiento:', error);
     }
 });
