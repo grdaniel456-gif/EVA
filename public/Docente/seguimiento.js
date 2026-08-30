@@ -3,31 +3,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO EXACTO DE HOMBRES Y MUJERES
-        let contadorHombres = 0;
-        let contadorMujeres = 0;
+        // 1. CONTEO DE HOMBRES Y MUJERES
+        let totalHombres = 0;
+        let totalMujeres = 0;
 
         alumnos.forEach(alumno => {
-            // Limpiamos espacios y convertimos a mayúscula por seguridad
             const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
-            
             if (generoLimpio === 'H') {
-                contadorHombres++;
+                totalHombres++;
             } else if (generoLimpio === 'M') {
-                contadorMujeres++;
+                totalMujeres++;
             }
         });
 
         // Escribir los resultados en las celdas de Información General
-        const elemTotal = document.getElementById('totalEstudiantes');
-        const elemHombres = document.getElementById('totalHombres');
-        const elemMujeres = document.getElementById('totalMujeres');
+        document.getElementById('totalEstudiantes').textContent = alumnos.length;
+        document.getElementById('totalHombres').textContent = totalHombres;
+        document.getElementById('totalMujeres').textContent = totalMujeres;
 
-        if (elemTotal) elemTotal.textContent = alumnos.length;
-        if (elemHombres) elemHombres.textContent = contadorHombres;
-        if (elemMujeres) elemMujeres.textContent = contadorMujeres;
-
-        // 2. EXTRAER APELLIDO PATERNO PARA ORDENAR A-Z
+        // 2. Extraer Apellido Paterno para ordenar A-Z
         const obtenerApellido = (nombreCompleto) => {
             if (!nombreCompleto) return '';
             const partes = nombreCompleto.trim().split(' ');
@@ -36,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return partes[0];
         };
 
-        // Ordenar alfabéticamente A-Z por apellido
+        // Ordenar alfabéticamente A-Z
         alumnos.sort((a, b) => {
             const apellidoA = obtenerApellido(a.nombre);
             const apellidoB = obtenerApellido(b.nombre);
@@ -50,10 +44,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // Formatear marcas H / M para la fila individual
             const gen = String(alumno.genero || 'H').trim().toUpperCase();
-            const marcaH = gen === 'H' ? 'X' : '';
-            const marcaM = gen === 'M' ? 'X' : '';
+            const esH = gen === 'H' ? 'X' : '';
+            const esM = gen === 'M' ? 'X' : '';
 
             tr.innerHTML = `
                 <td>${i + 1}</td>
@@ -62,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${gen}</td>
             `;
 
-            // Evaluar días trabajados (Jueves = Grupal, Lunes = Individual)
+            // Evaluar asistencias (Jueves = Grupal, Lunes = Individual)
             let asistioJueves = false;
             let asistioLunes = false;
 
@@ -86,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- BLOQUE DE LAS 4 SESIONES ---
+            // RENDERIZAR LAS 4 SESIONES DEL PARCIAL
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
                     tr.innerHTML += `
@@ -96,9 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td class="bg-amarillo-dia ${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td>
                         <td class="bg-amarillo-dia"></td>
                         <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia">${marcaH}</td>
-                        <td class="bg-amarillo-dia">${marcaM}</td>
-                        <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}">${asistioLunes ? '✔' : ''}</td>
+                        <td class="bg-amarillo-dia">${esH}</td>
+                        <td class="bg-amarillo-dia">${esM}</td>
+                        <!-- COLUMNA ROSA (INDIVIDUAL): SE RELLENA CON 'X' SI ASISTIÓ EL LUNES -->
+                        <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}">${asistioLunes ? 'X' : ''}</td>
                     `;
                 } else {
                     tr.innerHTML += `
@@ -115,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // COLUMNAS FINALES
+            // COLUMNAS FINALES (Observaciones)
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -126,6 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al calcular contadores y renderizar seguimiento:', error);
+        console.error('Error al cargar datos de seguimiento:', error);
     }
 });
