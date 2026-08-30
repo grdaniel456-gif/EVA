@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario de Clases</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f4;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .horario-container {
+            width: 100%;
+            max-width: 1100px;
+            background-color: #ffffff;
+            border: 3px solid #000000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        /* Tabla principal */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            border: 1.5px solid #000000;
+            padding: 6px;
+            font-size: 0.85rem;
+        }
+
+        /* Headers */
+        .header-materia {
+            background-color: #000000;
+            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .header-horario {
+            background-color: #000000;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .day-header {
+            font-weight: bold;
+            font-size: 0.75rem;
+            padding: 4px;
+        }
+
+        .curso-especial-header {
+            background-color: #000000;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Celdas laterales y de datos */
+        .label-field {
+            background-color: #ffffff;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-align: left;
+            width: 160px;
+        }
+
+        .data-materia {
+            text-align: left;
+            padding-left: 10px;
+            font-weight: 500;
+        }
+
+        .data-docente {
+            background-color: #e0e0e0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .empty-slot {
+            background-color: #d9d9d9;
+        }
+
+        .time-slot {
+            font-size: 0.8rem;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .creditos-col {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .check-x {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* Fila Inferior de Resumen */
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: -1px;
+        }
+
+        .tutor-cell {
+            border: 1.5px solid #000000;
+            background-color: #e0e0e0;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-align: left;
+            padding: 8px 12px;
+            width: 65%;
+        }
+
+        .exceso-cell {
+            border: 1.5px solid #000000;
+            background-color: #000000;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-align: right;
+            padding: 8px 10px;
+        }
+
+        .creditos-total-cell {
+            border: 1.5px solid #000000;
+            background-color: #ffffff;
+            font-weight: bold;
+            font-size: 1.3rem;
+            text-align: center;
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="horario-container">
+    <table>
+        <thead>
+            <tr>
+                <th colspan="2" class="header-materia">MATERIA</th>
+                <th colspan="6" class="header-horario">HORARIO</th>
+                <th rowspan="2" style="width: 50px; font-size: 0.75rem; font-weight: bold;">#<br>CRÉDITOS</th>
+                <th colspan="2" class="curso-especial-header">CURSO ESPECIAL</th>
+            </tr>
+            <tr>
+                <th colspan="2"></th>
+                <th class="day-header" style="width: 75px;">LUNES</th>
+                <th class="day-header" style="width: 75px;">MARTES</th>
+                <th class="day-header" style="width: 75px;">MIÉRCOLES</th>
+                <th class="day-header" style="width: 75px;">JUEVES</th>
+                <th class="day-header" style="width: 75px;">VIERNES</th>
+                <th class="day-header" style="width: 75px;">SÁBADO</th>
+                <th style="width: 35px; font-weight: bold; font-size: 0.8rem;">SI</th>
+                <th style="width: 35px; font-weight: bold; font-size: 0.8rem;">NO</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Materia 1 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Relaciones Industriales</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">12:00-14:00 hrs.<br>SM</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">12:00-14:00 hrs.<br>SM</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">4</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Ivonne Pérez Vázquez</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 2 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Planeación Financiera</td>
+                <td class="time-slot">16:00-18:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">16:00-18:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">4</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Maria Luisa González Martínez</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 3 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Planeación y diseño de Instalaciones</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">14:00-16:00 hrs.<br>K5</td>
+                <td class="time-slot">17:00-18:00 hrs.<br>K4</td>
+                <td class="time-slot">17:00-18:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">4</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Armando Zamorano Tamayo</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 4 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Sistemas de Manufactura</td>
+                <td class="time-slot">12:00-14:00 hrs.<br>SM</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">12:00-14:00 hrs.<br>SM</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">13:00-14:00 hrs.<br>K1</td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">5</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Carlos Alberto González Jimenez</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 5 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Logística y Cadenas de Suministro</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">14:00-16:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">14:00-16:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">4</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Magdalena Torres Rosas</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 6 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Gestión de los Sistemas de Calidad</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">14:00-16:00 hrs.<br>K4</td>
+                <td class="time-slot">11:00-13:00 hrs.<br>K5</td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">4</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Edith Dalile Aguilar Rojano</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 7 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Ingeniería de Sistemas</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">14:00-15:00 hrs.<br>K5</td>
+                <td class="time-slot">16:00-17:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td class="time-slot">16:00-17:00 hrs.<br>K4</td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">3</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Anselmo Charros Tlapalcoyoa</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+
+            <!-- Materia 8 -->
+            <tr>
+                <td class="label-field">NOMBRE DE LA MATERIA</td>
+                <td class="data-materia">Servicio Social</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td rowspan="2" class="creditos-col">10</td>
+                <td rowspan="2"></td>
+                <td rowspan="2" class="check-x">X</td>
+            </tr>
+            <tr>
+                <td class="label-field">DOCENTE</td>
+                <td class="data-docente">Beatriz Castelán Aparicio</td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+                <td class="empty-slot"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Footer Tutor y Créditos -->
+    <table class="footer-table">
+        <tr>
+            <td class="tutor-cell">TUTOR: Anselmo Charros Tlapalcoyoa</td>
+            <td class="exceso-cell">EXCESO DE CRÉDITOS</td>
+            <td class="creditos-total-cell">38</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>
