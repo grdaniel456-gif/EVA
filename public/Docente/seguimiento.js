@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // Actualizar valores en el bloque superior
         document.getElementById('totalEstudiantes').textContent = alumnos.length;
         document.getElementById('totalHombres').textContent = totalHombres;
         document.getElementById('totalMujeres').textContent = totalMujeres;
@@ -42,11 +43,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // Determinar sexo del alumno ('X' en H o 'X' en M)
-            const gen = String(alumno.genero || '').trim().toUpperCase();
-            const marcaH = gen === 'H' ? 'X' : '';
-            const marcaM = gen === 'M' ? 'X' : '';
-
             // EVALUAR ASISTENCIAS DESDE BD
             let asistioJueves = false;
             let asistioLunes = false;
@@ -71,26 +67,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO (5 COLUMNAS) ---
-            // 1. Nº | 2. MATRÍCULA | 3. NOMBRE | 4. SEXO H | 5. SEXO M
+            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO ---
+            // N° | MATRÍCULA | NOMBRE | SEXO H (BLANCO) | SEXO M (BLANCO)
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${alumno.matricula}</td>
                 <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td style="font-weight: bold;">${marcaH}</td>
-                <td style="font-weight: bold;">${marcaM}</td>
+                <td></td> <!-- Dejado en blanco de momento -->
+                <td></td> <!-- Dejado en blanco de momento -->
             `;
 
-            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS (9 COLUMNAS POR SESIÓN) ---
+            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS ---
+            // Regla: Se pone un '1' si asistió; si no, celda vacía.
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
-                    // SESIÓN 1 (Muestra asistencias de Lunes y Jueves)
+                    // SESIÓN 1
                     tr.innerHTML += `
                         <!-- 1. FECHA INDIVIDUAL -->
                         <td></td>
                         
-                        <!-- 2. ASISTENCIA INDIVIDUAL (ROSA) -> 'X' si asistió el Lunes -->
-                        <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}" style="font-weight: bold;">${asistioLunes ? 'X' : ''}</td>
+                        <!-- 2. ASISTENCIA INDIVIDUAL (ROSA) -> Coloca '1' si asistió el Lunes -->
+                        <td class="bg-rosa-col" style="font-weight: bold;">${asistioLunes ? '1' : ''}</td>
                         
                         <!-- 3. FECHA GRUPAL -->
                         <td></td>
@@ -99,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td></td> <!-- L -->
                         <td></td> <!-- M -->
                         <td></td> <!-- X -->
-                        <td class="${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td> <!-- J -->
+                        <td style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J -->
                         <td></td> <!-- V -->
                         <td></td> <!-- S -->
                     `;
@@ -119,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // --- BLOQUE 3: COLUMNAS FINALES DE OBSERVACIONES (3 COLUMNAS) ---
+            // --- BLOQUE 3: COLUMNAS FINALES ---
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -130,6 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al renderizar el formato:', error);
+        console.error('Error al renderizar el formato de seguimiento:', error);
     }
 });
