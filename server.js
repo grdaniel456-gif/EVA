@@ -286,6 +286,18 @@ app.get('/api/alumnos', async (req, res) => {
         res.status(500).json({ exito: false, mensaje: err.message });
     }
 });
+// --- RUTA PARA EL SEGUIMIENTO DE ASISTENCIAS ---
+app.get('/api/seguimiento', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT matricula, nombre, asistencias, historial_asistencias FROM alumnos'
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error al obtener datos de seguimiento:', err);
+        res.status(500).json({ exito: false, mensaje: 'Error al consultar la base de datos' });
+    }
+});
 
 // --- 8. ARRANCAR SERVIDOR ---
 server.listen(PORT, () => {
