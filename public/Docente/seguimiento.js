@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO DE HOMBRES Y MUJERES PARA INFORMACIÓN GENERAL
+        // 1. CONTEO DE HOMBRES Y MUJERES PARA EL BLOQUE DE INFORMACIÓN GENERAL
         let totalHombres = 0;
         let totalMujeres = 0;
 
@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Actualizar valores en el bloque superior
         document.getElementById('totalEstudiantes').textContent = alumnos.length;
         document.getElementById('totalHombres').textContent = totalHombres;
         document.getElementById('totalMujeres').textContent = totalMujeres;
@@ -43,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // EVALUAR ASISTENCIAS DESDE BD
+            // EVALUAR ASISTENCIAS DESDE LA BASE DE DATOS
             let asistioJueves = false;
             let asistioLunes = false;
 
@@ -67,18 +66,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO ---
+            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO (5 COLUMNAS) ---
             // N° | MATRÍCULA | NOMBRE | SEXO H (BLANCO) | SEXO M (BLANCO)
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${alumno.matricula}</td>
                 <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td></td> <!-- Dejado en blanco de momento -->
-                <td></td> <!-- Dejado en blanco de momento -->
+                <td></td> <!-- Sexo H en blanco -->
+                <td></td> <!-- Sexo M en blanco -->
             `;
 
-            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS ---
-            // Regla: Se pone un '1' si asistió; si no, celda vacía.
+            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS (9 COLUMNAS POR SESIÓN) ---
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
                     // SESIÓN 1
@@ -86,19 +84,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <!-- 1. FECHA INDIVIDUAL -->
                         <td></td>
                         
-                        <!-- 2. ASISTENCIA INDIVIDUAL (ROSA) -> Coloca '1' si asistió el Lunes -->
+                        <!-- 2. ASISTENCIA INDIVIDUAL (COLUMNA ROSA) -> Pone '1' si asistió el Lunes -->
                         <td class="bg-rosa-col" style="font-weight: bold;">${asistioLunes ? '1' : ''}</td>
                         
                         <!-- 3. FECHA GRUPAL -->
                         <td></td>
                         
-                        <!-- 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, X, J, V, S) -->
-                        <td></td> <!-- L -->
-                        <td></td> <!-- M -->
-                        <td></td> <!-- X -->
-                        <td style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J -->
-                        <td></td> <!-- V -->
-                        <td></td> <!-- S -->
+                        <!-- 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, X=Miércoles, J, V, S) -->
+                        <td></td> <!-- L (Lunes) -->
+                        <td></td> <!-- M (Martes) -->
+                        <td></td> <!-- X (Miércoles - SIN PINTAR DE ROSA) -->
+                        <td style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J (Jueves) -->
+                        <td></td> <!-- V (Viernes) -->
+                        <td></td> <!-- S (Sábado) -->
                     `;
                 } else {
                     // SESIONES 2, 3 Y 4 EN BLANCO
@@ -116,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // --- BLOQUE 3: COLUMNAS FINALES ---
+            // --- BLOQUE 3: COLUMNAS FINALES DE OBSERVACIONES ---
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -127,6 +125,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al renderizar el formato de seguimiento:', error);
+        console.error('Error al renderizar el seguimiento:', error);
     }
 });
