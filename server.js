@@ -17,15 +17,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- 1. CONEXIÓN E INICIALIZACIÓN DE POSTGRESQL ---
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://eva_db_n0jc_user:zosdPzPXVx0e8Rw8ePgibu144pkn8WYX@dpg-da9io1hf2nfc73fmjdeg-a/eva_db_n0jc',
-    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
-});
-
-// Inicializar tabla de alumnos en PostgreSQL
 const inicializarBD = async () => {
     try {
-        // 1. Crear tabla base si no existe
         await pool.query(`
             CREATE TABLE IF NOT EXISTS alumnos (
                 matricula VARCHAR(50) PRIMARY KEY,
@@ -34,19 +27,20 @@ const inicializarBD = async () => {
             );
         `);
 
-        // 2. Asegurar que existan las columnas requeridas
         await pool.query(`
             ALTER TABLE alumnos 
             ADD COLUMN IF NOT EXISTS password VARCHAR(100),
             ADD COLUMN IF NOT EXISTS genero VARCHAR(1),
-            ADD COLUMN IF NOT EXISTS modalidad VARCHAR(1);
+            ADD COLUMN IF NOT EXISTS modalidad VARCHAR(1),
+            ADD COLUMN IF NOT EXISTS historial_asistencias TEXT[] DEFAULT '{}';
         `);
 
-        console.log('Tabla "alumnos" en PostgreSQL inicializada con genero y modalidad.');
+        console.log('Tabla "alumnos" lista con historial_asistencias en PostgreSQL.');
     } catch (err) {
         console.error('Error inicializando PostgreSQL:', err);
     }
 };
+
 
 inicializarBD();
 
@@ -85,10 +79,13 @@ app.post('/api/registro', async (req, res) => {
         return res.status(400).json({ exito: false, mensaje: 'Todos los campos son obligatorios.' });
     }
 
-    // Validación 1: Matrícula exactamente de 8 dígitos numéricos
-    const regexMatricula = /^\d{8}$/;
+    // Validación 1: Matrícula exactamente de 8 caracteres alfanuméricos (letras y/o números)
+    const regexMatricula = /^[a-zA-Z0-9]{8}$/;
     if (!regexMatricula.test(matricula)) {
-        return res.status(400).json({ exito: false, mensaje: 'La matrícula debe contener exactamente 8 dígitos numéricos.' });
+        return res.status(400).json({ 
+            exito: false, 
+            mensaje: 'La matrícula debe contener exactamente 8 caracteres (letras y números).' 
+        });
     }
 
     // Validación 2: Género debe ser 'H' o 'M'
@@ -168,11 +165,11 @@ app.post('/login', async (req, res) => {
         return res.status(400).send('Rol no válido');
     }
 });
-
 // --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA ---
 app.post('/api/registrar-asistencia', async (req, res) => {
     const { matricula, token } = req.body;
 
+    // 1. Validar el token activo
     if (!token || token !== tokenActivoActual) {
         return res.status(400).json({ 
             exito: false, 
@@ -181,35 +178,62 @@ app.post('/api/registrar-asistencia', async (req, res) => {
     }
 
     try {
-        const updateResult = await pool.query(
-            'UPDATE alumnos SET asistencias = asistencias + 1 WHERE matricula = $1 RETURNING *',
+        // 2. Obtener el alumno para calcular el correlativo de asistencia
+        const alumnoResult = await pool.query(
+            'SELECT asistencias FROM alumnos WHERE matricula = $1',
             [matricula]
         );
 
-        if (updateResult.rows.length === 0) {
-            return res.status(404).json({ exito: false, mensaje: 'El estudiante no existe en la base de datos.' });
+        if (alumnoResult.rows.length === 0) {
+            return res.status(404).json({ exito: false, mensaje: 'El estudiante no existe.' });
         }
 
-        const alumno = updateResult.rows[0];
+        const asistenciasActuales = alumnoResult.rows[0].asistencias || 0;
+        const numAsistencia = asistenciasActuales + 1;
 
+        // 3. Formatear Fecha y Hora (ej: 30-08-2026-08:07)
+        const ahora = new Date();
+        const dia = String(ahora.getDate()).padStart(2, '0');
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const anio = ahora.getFullYear();
+        const horas = String(ahora.getHours()).padStart(2, '0');
+        const minutos = String(ahora.getMinutes()).padStart(2, '0');
+
+        const fechaFormateada = `${dia}-${mes}-${anio}-${horas}:${minutos}`;
+        const nuevoRegistro = `asistencia ${numAsistencia}: ${fechaFormateada}`;
+
+        // 4. Actualizar conteo y hacer PUSH al arreglo en Postgres (array_append)
+        const updateResult = await pool.query(
+            `UPDATE alumnos 
+             SET asistencias = asistencias + 1,
+                 historial_asistencias = array_append(COALESCE(historial_asistencias, '{}'), $1)
+             WHERE matricula = $2 
+             RETURNING *`,
+            [nuevoRegistro, matricula]
+        );
+
+        const alumnoActualizado = updateResult.rows[0];
+
+        // 5. Quemar token y emitir evento WebSocket
         tokenActivoActual = generarTokenUnico();
         io.emit('actualizar_qr', { 
             token: tokenActivoActual,
             ultimoAlumno: matricula 
         });
 
-        res.json({
+        // 6. Responder al cliente
+        return res.json({
             exito: true,
-            mensaje: `¡Asistencia registrada para ${alumno.nombre}!`,
-            totalAsistencias: alumno.asistencias
+            mensaje: `¡Asistencia registrada! (${nuevoRegistro})`,
+            totalAsistencias: alumnoActualizado.asistencias,
+            historial: alumnoActualizado.historial_asistencias
         });
 
     } catch (err) {
-        console.error('Error en PostgreSQL:', err);
-        res.status(500).json({ exito: false, mensaje: 'Error al registrar la asistencia.' });
+        console.error('Error en PostgreSQL al registrar asistencia:', err);
+        return res.status(500).json({ exito: false, mensaje: 'Error interno al registrar asistencia.' });
     }
 });
-
 // --- 7. CONSULTAR LISTA DE ALUMNOS ---
 app.get('/api/alumnos', async (req, res) => {
     try {
