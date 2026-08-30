@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Determinar marcas de Sexo (X en columna H o X en columna M)
             const gen = String(alumno.genero || '').trim().toUpperCase();
-            const marcaH = gen === 'H' ? 'H' : '';
-            const marcaM = gen === 'M' ? 'M' : '';
+            const marcaH = gen === 'H' ? 'X' : '';
+            const marcaM = gen === 'M' ? 'X' : '';
 
             // Columnas fijas del alumno
             tr.innerHTML = `
