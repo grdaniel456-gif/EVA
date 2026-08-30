@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
+        // Actualizar contador total
+        document.getElementById('totalEstudiantes').textContent = alumnos.length;
+
         // 1. Extraer Apellido Paterno para ordenar A-Z
         const obtenerApellido = (nombreCompleto) => {
             if (!nombreCompleto) return '';
@@ -12,38 +15,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             return partes[0];
         };
 
-        // Ordenar alfabéticamente
+        // Ordenar alfabéticamente A-Z por apellido
         alumnos.sort((a, b) => {
             const apellidoA = obtenerApellido(a.nombre);
             const apellidoB = obtenerApellido(b.nombre);
             return apellidoA.localeCompare(apellidoB, 'es', { sensitivity: 'base' });
         });
 
-        const cuerpoTabla = document.getElementById('cuerpoSeguimiento');
+        const cuerpoTabla = document.getElementById('cuerpoTabla');
         cuerpoTabla.innerHTML = '';
 
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // N°, Matrícula, Nombre
+            // N°, Matrícula, Nombre, Sexo (Obtenido de BD o por defecto)
+            const genero = alumno.genero || 'H';
+            const esH = genero.toUpperCase() === 'H' ? 'X' : '';
+            const esM = genero.toUpperCase() === 'M' ? 'X' : '';
+
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${alumno.matricula}</td>
-                <td class="text-left">${alumno.nombre}</td>
+                <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
+                <td>${genero}</td>
             `;
 
-            // Evaluar asistencias por tipo de día (Lunes/Jueves)
-            let asistioJueves = false; // Grupal
-            let asistioLunes = false;  // Individual
+            // Evaluar días trabajados (Jueves = Grupal, Lunes = Individual)
+            let asistioJueves = false;
+            let asistioLunes = false;
 
             if (alumno.historial_asistencias && Array.isArray(alumno.historial_asistencias)) {
                 alumno.historial_asistencias.forEach(registro => {
-                    // Formato en BD: "asistencia 1: 30-08-2026-11:46"[cite: 2]
                     const partes = registro.split(': ');
                     if (partes.length > 1) {
                         const rawFecha = partes[1].trim().split('-'); // ["30", "08", "2026", "11:46"]
                         const dia = parseInt(rawFecha[0], 10);
-                        const mes = parseInt(rawFecha[1], 10) - 1; // Meses en JS inician en 0
+                        const mes = parseInt(rawFecha[1], 10) - 1;
                         const anio = parseInt(rawFecha[2], 10);
 
                         const fechaObjeto = new Date(anio, mes, dia);
@@ -55,31 +62,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- BLOQUE GRUPAL (L, M, X, J, V, S) ---
-            tr.innerHTML += `
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td class="${asistioJueves ? 'presente' : 'ausente'}">${asistioJueves ? '✔' : '✘'}</td>
-                <td>-</td>
-                <td>-</td>
-            `;
+            // --- BLOQUE DE LAS 4 SESIONES (SESIÓN 1 POBLADA CON BD, RESTO EN BLANCO) ---
+            for (let s = 1; s <= 4; s++) {
+                if (s === 1) {
+                    // Sesión 1 activa con datos reales
+                    tr.innerHTML += `
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia ${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia">${esH}</td>
+                        <td class="bg-amarillo-dia">${esM}</td>
+                        <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}">${asistioLunes ? '✔' : ''}</td>
+                    `;
+                } else {
+                    // Sesiones 2, 3 y 4 en blanco preparadas para futuro uso
+                    tr.innerHTML += `
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-rosa-col"></td>
+                    `;
+                }
+            }
 
-            // --- BLOQUE INDIVIDUAL (L, M, X, J, V, S) ---
+            // COLUMNAS FINALES (Observaciones / Selects)
             tr.innerHTML += `
-                <td class="${asistioLunes ? 'presente' : 'ausente'}">${asistioLunes ? '✔' : '✘'}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td><small>${asistioLunes ? 'Atendido individualmente' : 'Sin sesión'}</small></td>
+                <td><small>Seleccione</small></td>
+                <td><small>Seleccione</small></td>
+                <td></td>
             `;
 
             cuerpoTabla.appendChild(tr);
         });
 
     } catch (error) {
-        console.error('Error al generar plantilla de asistencias:', error);
+        console.error('Error al renderizar el formato Excel:', error);
     }
 });

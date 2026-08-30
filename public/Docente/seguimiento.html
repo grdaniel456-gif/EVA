@@ -9,66 +9,144 @@
 <body>
     <div class="contenedor-excel">
 
-        <!-- BLOQUE 1: INFORMACIÓN GENERAL DE LA TAPA DEL EXCEL -->
+        <!-- BLOQUE 1: INFORMACIÓN GENERAL -->
         <table class="tabla-info">
             <tr>
-                <th colspan="2">INFORMACIÓN GENERAL</th>
+                <th colspan="2" class="info-header">1. INFORMACIÓN GENERAL</th>
             </tr>
             <tr>
-                <td>Periodo:</td>
-                <td><strong>Mayo - Agosto 2026</strong></td>
+                <td class="info-label">Periodo:</td>
+                <td class="info-data">Mayo - Agosto 2026</td>
             </tr>
             <tr>
-                <td>División:</td>
-                <td><strong>Informática / TIC</strong></td>
+                <td class="info-label">División:</td>
+                <td class="info-data">Informática / TIC</td>
             </tr>
             <tr>
-                <td>Persona Tutora:</td>
-                <td><strong>Docente Encargado</strong></td>
+                <td class="info-label">Persona Tutora:</td>
+                <td class="info-data">Docente Encargado</td>
+            </tr>
+            <tr>
+                <td class="info-label">Semestre y grupo:</td>
+                <td class="info-data">---</td>
+            </tr>
+            <tr>
+                <td class="info-label">No. Total de estudiantes:</td>
+                <td class="info-data" id="totalEstudiantes">0</td>
             </tr>
         </table>
 
-        <!-- BLOQUE 2: TABLA DE ASISTENCIAS POR PARCIALES -->
+        <!-- BLOQUE 2: TABLA PRINCIPAL DEL SEGUIMIENTO -->
         <div class="scroll-tabla">
             <table class="tabla-seguimiento">
                 <thead>
-                    <!-- Fila 1: Encabezado del Parcial -->
+                    <!-- FILA 1: PARCIAL -->
                     <tr>
-                        <th rowspan="4" class="col-num">N°</th>
-                        <th rowspan="4" class="col-mat">MATRÍCULA</th>
-                        <th rowspan="4" class="col-nom">NOMBRE DEL ALUMNO</th>
-                        <th colspan="13" class="header-parcial">PRIMER PARCIAL</th>
+                        <th rowspan="6" class="col-n header-estudiantil">N°</th>
+                        <th rowspan="6" class="col-mat header-estudiantil">MATRÍCULA</th>
+                        <th rowspan="6" class="col-nom header-estudiantil">NOMBRE DEL ALUMNO</th>
+                        <th rowspan="6" class="col-sexo header-estudiantil">SEXO<br>H/M</th>
+                        <th colspan="32" class="header-parcial">PRIMER PARCIAL</th>
+                        <th rowspan="6" class="col-obs">Razon de inasistencia<br>a Tutoría Grupal</th>
+                        <th rowspan="6" class="col-obs">Acciones<br>implementadas</th>
+                        <th rowspan="6" class="col-obs">Observaciones</th>
                     </tr>
-                    <!-- Fila 2: Subcabecera de Sesiones -->
-                    <tr>
-                        <th colspan="6" class="header-sesion">SESIÓN 1 (GRUPAL - JUEVES)</th>
-                        <th colspan="7" class="header-sesion-ind">SESIÓN 2 (INDIVIDUAL - LUNES)</th>
-                    </tr>
-                    <!-- Fila 3: Indicador de Modalidad -->
-                    <tr>
-                        <th colspan="6" class="bg-grupal">ASISTENCIA GRUPAL</th>
-                        <th colspan="7" class="bg-individual">ASISTENCIA INDIVIDUAL</th>
-                    </tr>
-                    <!-- Fila 4: Días Hábiles del Excel (L, M, X, J, V, S) -->
-                    <tr>
-                        <th class="col-dia">L</th>
-                        <th class="col-dia">M</th>
-                        <th class="col-dia">X</th>
-                        <th class="col-dia bg-destacado">J</th> <!-- Día Grupal -->
-                        <th class="col-dia">V</th>
-                        <th class="col-dia">S</th>
 
-                        <th class="col-dia bg-destacado">L</th> <!-- Día Individual -->
-                        <th class="col-dia">M</th>
-                        <th class="col-dia">X</th>
-                        <th class="col-dia">J</th>
-                        <th class="col-dia">V</th>
-                        <th class="col-dia">S</th>
-                        <th>OBSERVACIONES</th>
+                    <!-- FILA 2: SESIONES -->
+                    <tr>
+                        <th colspan="8" class="header-sesion">SESIÓN 1</th>
+                        <th colspan="8" class="header-sesion">SESIÓN 2</th>
+                        <th colspan="8" class="header-sesion">SESIÓN 3</th>
+                        <th colspan="8" class="header-sesion">SESIÓN 4</th>
+                    </tr>
+
+                    <!-- FILA 3: INDICACIONES ACTIVIDAD -->
+                    <tr>
+                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 1</th>
+                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 2</th>
+                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 3</th>
+                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 4</th>
+                    </tr>
+
+                    <!-- FILA 4: SUB-ENCABEZADOS GRUPAL / INDIVIDUAL -->
+                    <tr>
+                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL:<br>DD/MM/AAAA</th>
+                        <th class="bg-sexo-header">SEXO</th>
+                        <th class="bg-rosa-header">FECHA INDIVIDUAL<br>DD/MM/AAAA</th>
+
+                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL</th>
+                        <th class="bg-sexo-header">SEXO</th>
+                        <th class="bg-rosa-header">FECHA INDIVIDUAL</th>
+
+                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL</th>
+                        <th class="bg-sexo-header">SEXO</th>
+                        <th class="bg-rosa-header">FECHA INDIVIDUAL</th>
+
+                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL</th>
+                        <th class="bg-sexo-header">SEXO</th>
+                        <th class="bg-rosa-header">FECHA INDIVIDUAL</th>
+                    </tr>
+
+                    <!-- FILA 5: TUTORÍA GRUPAL / INDIVIDUAL -->
+                    <tr>
+                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
+                        <th rowspan="2" class="col-h-m">H</th>
+                        <th rowspan="2" class="col-h-m">M</th>
+                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+
+                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
+                        <th rowspan="2" class="col-h-m">H</th>
+                        <th rowspan="2" class="col-h-m">M</th>
+                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+
+                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
+                        <th rowspan="2" class="col-h-m">H</th>
+                        <th rowspan="2" class="col-h-m">M</th>
+                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+
+                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
+                        <th rowspan="2" class="col-h-m">H</th>
+                        <th rowspan="2" class="col-h-m">M</th>
+                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+                    </tr>
+
+                    <!-- FILA 6: DÍAS (L, M, X, J, V, S) -->
+                    <tr>
+                        <th class="col-dia bg-amarillo-dia">L</th>
+                        <th class="col-dia bg-amarillo-dia">M</th>
+                        <th class="col-dia bg-amarillo-dia">X</th>
+                        <th class="col-dia bg-amarillo-dia">J</th>
+                        <th class="col-dia bg-amarillo-dia">V</th>
+                        <th class="col-dia bg-amarillo-dia">S</th>
+                        <th class="bg-rosa-col"></th>
+
+                        <th class="col-dia bg-amarillo-dia">L</th>
+                        <th class="col-dia bg-amarillo-dia">M</th>
+                        <th class="col-dia bg-amarillo-dia">X</th>
+                        <th class="col-dia bg-amarillo-dia">J</th>
+                        <th class="col-dia bg-amarillo-dia">V</th>
+                        <th class="col-dia bg-amarillo-dia">S</th>
+                        <th class="bg-rosa-col"></th>
+
+                        <th class="col-dia bg-amarillo-dia">L</th>
+                        <th class="col-dia bg-amarillo-dia">M</th>
+                        <th class="col-dia bg-amarillo-dia">X</th>
+                        <th class="col-dia bg-amarillo-dia">J</th>
+                        <th class="col-dia bg-amarillo-dia">V</th>
+                        <th class="col-dia bg-amarillo-dia">S</th>
+                        <th class="bg-rosa-col"></th>
+
+                        <th class="col-dia bg-amarillo-dia">L</th>
+                        <th class="col-dia bg-amarillo-dia">M</th>
+                        <th class="col-dia bg-amarillo-dia">X</th>
+                        <th class="col-dia bg-amarillo-dia">J</th>
+                        <th class="col-dia bg-amarillo-dia">V</th>
+                        <th class="col-dia bg-amarillo-dia">S</th>
+                        <th class="bg-rosa-col"></th>
                     </tr>
                 </thead>
-                <tbody id="cuerpoSeguimiento">
-                    <!-- Filas renderizadas mediante JS -->
+                <tbody id="cuerpoTabla">
+                    <!-- Generado dinámicamente con JS -->
                 </tbody>
             </table>
         </div>
