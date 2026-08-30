@@ -3,25 +3,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO Y CÁLCULO DE INFORMACIÓN GENERAL
-        let totalHombres = 0;
-        let totalMujeres = 0;
+        // 1. CONTEO EXACTO DE HOMBRES Y MUJERES
+        let contadorHombres = 0;
+        let contadorMujeres = 0;
 
         alumnos.forEach(alumno => {
-            const genero = (alumno.genero || '').toUpperCase();
-            if (genero === 'H') {
-                totalHombres++;
-            } else if (genero === 'M') {
-                totalMujeres++;
+            // Limpiamos espacios y convertimos a mayúscula por seguridad
+            const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
+            
+            if (generoLimpio === 'H') {
+                contadorHombres++;
+            } else if (generoLimpio === 'M') {
+                contadorMujeres++;
             }
         });
 
-        // Asignar los totales a la tabla de Información General
-        document.getElementById('totalEstudiantes').textContent = alumnos.length;
-        document.getElementById('totalHombres').textContent = totalHombres;
-        document.getElementById('totalMujeres').textContent = totalMujeres;
+        // Escribir los resultados en las celdas de Información General
+        const elemTotal = document.getElementById('totalEstudiantes');
+        const elemHombres = document.getElementById('totalHombres');
+        const elemMujeres = document.getElementById('totalMujeres');
 
-        // 2. Extraer Apellido Paterno para ordenar A-Z
+        if (elemTotal) elemTotal.textContent = alumnos.length;
+        if (elemHombres) elemHombres.textContent = contadorHombres;
+        if (elemMujeres) elemMujeres.textContent = contadorMujeres;
+
+        // 2. EXTRAER APELLIDO PATERNO PARA ORDENAR A-Z
         const obtenerApellido = (nombreCompleto) => {
             if (!nombreCompleto) return '';
             const partes = nombreCompleto.trim().split(' ');
@@ -38,38 +44,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         const cuerpoTabla = document.getElementById('cuerpoTabla');
+        if (!cuerpoTabla) return;
         cuerpoTabla.innerHTML = '';
 
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // Determinar marcas de género 'X' en la columna correspondiente
-            const genero = (alumno.genero || 'H').toUpperCase();
-            const esH = genero === 'H' ? 'X' : '';
-            const esM = genero === 'M' ? 'X' : '';
+            // Formatear marcas H / M para la fila individual
+            const gen = String(alumno.genero || 'H').trim().toUpperCase();
+            const marcaH = gen === 'H' ? 'X' : '';
+            const marcaM = gen === 'M' ? 'X' : '';
 
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${alumno.matricula}</td>
                 <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td>${genero}</td>
+                <td>${gen}</td>
             `;
 
-            // Evaluar días trabajados en PostgreSQL (Jueves = Grupal, Lunes = Individual)
+            // Evaluar días trabajados (Jueves = Grupal, Lunes = Individual)
             let asistioJueves = false;
             let asistioLunes = false;
 
-            // 3. PROCESAR HISTORIAL_ASISTENCIAS ("asistencia 1: 30-08-2026-11:46")
             if (alumno.historial_asistencias && Array.isArray(alumno.historial_asistencias)) {
                 alumno.historial_asistencias.forEach(registro => {
                     const partes = registro.split(': ');
                     if (partes.length > 1) {
-                        // Extrae la subcadena "30-08-2026-11:46"
                         const subpartes = partes[1].trim().split('-'); // ["30", "08", "2026", "11:46"]
-                        
                         if (subpartes.length >= 3) {
                             const dia = parseInt(subpartes[0], 10);
-                            const mes = parseInt(subpartes[1], 10) - 1; // En JavaScript los meses inician en 0 (Enero=0)
+                            const mes = parseInt(subpartes[1], 10) - 1; // Mes base 0 en JS
                             const anio = parseInt(subpartes[2], 10);
 
                             const fechaObjeto = new Date(anio, mes, dia);
@@ -82,10 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // 4. RENDERIZAR LAS 4 SESIONES DEL PRIMER PARCIAL
+            // --- BLOQUE DE LAS 4 SESIONES ---
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
-                    // Sesión 1: Muestra los datos recopilados de PostgreSQL
                     tr.innerHTML += `
                         <td class="bg-amarillo-dia"></td>
                         <td class="bg-amarillo-dia"></td>
@@ -93,12 +96,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td class="bg-amarillo-dia ${asistioJueves ? 'marca-presente' : 'marca-ausente'}">${asistioJueves ? '✔' : '✘'}</td>
                         <td class="bg-amarillo-dia"></td>
                         <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia">${esH}</td>
-                        <td class="bg-amarillo-dia">${esM}</td>
+                        <td class="bg-amarillo-dia">${marcaH}</td>
+                        <td class="bg-amarillo-dia">${marcaM}</td>
                         <td class="bg-rosa-col ${asistioLunes ? 'marca-presente' : ''}">${asistioLunes ? '✔' : ''}</td>
                     `;
                 } else {
-                    // Sesiones 2, 3 y 4 preparadas en blanco
                     tr.innerHTML += `
                         <td class="bg-amarillo-dia"></td>
                         <td class="bg-amarillo-dia"></td>
@@ -113,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // COLUMNAS FINALES (Observaciones)
+            // COLUMNAS FINALES
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -124,6 +126,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al renderizar la vista de seguimiento:', error);
+        console.error('Error al calcular contadores y renderizar seguimiento:', error);
     }
 });
