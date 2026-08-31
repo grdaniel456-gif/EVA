@@ -3,24 +3,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO DE HOMBRES Y MUJERES PARA INFORMACIÓN GENERAL
+        // 1. CONTEO DE INFORMACIÓN GENERAL
         let totalHombres = 0;
         let totalMujeres = 0;
 
         alumnos.forEach(alumno => {
-            const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
-            if (generoLimpio === 'H') {
-                totalHombres++;
-            } else if (generoLimpio === 'M') {
-                totalMujeres++;
-            }
+            const genero = (alumno.genero || '').toUpperCase();
+            if (genero === 'H') totalHombres++;
+            else if (genero === 'M') totalMujeres++;
         });
 
         document.getElementById('totalEstudiantes').textContent = alumnos.length;
         document.getElementById('totalHombres').textContent = totalHombres;
         document.getElementById('totalMujeres').textContent = totalMujeres;
 
-        // 2. EXTRAER APELLIDO PATERNO Y ORDENAR A-Z
+        // 2. ORDENAR A-Z POR APELLIDO
         const obtenerApellido = (nombreCompleto) => {
             if (!nombreCompleto) return '';
             const partes = nombreCompleto.trim().split(' ');
@@ -36,90 +33,96 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         const cuerpoTabla = document.getElementById('cuerpoTabla');
-        if (!cuerpoTabla) return;
         cuerpoTabla.innerHTML = '';
 
-        // 3. RENDERIZAR FILAS CON ESTILOS Y ESTRUCTURA DE EXCEL
+        // Definir la fecha base de inicio del Parcial (Ejemplo: Lunes 24 de Agosto 2026)
+        // Ajusta esta fecha si el cuatrimestre inicia en otro día de agosto
+        const FECHA_INICIO_PARCIAL = new Date(2026, 7, 24); // 24-08-2026 (Mes 7 es Agosto)
+
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
+            const genero = (alumno.genero || 'H').toUpperCase();
+            const esH = genero === 'H' ? '1' : '';
+            const esM = genero === 'M' ? '1' : '';
 
-            const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
-            const esH = generoLimpio === 'H' ? 'H' : '';
-            const esM = generoLimpio === 'M' ? 'M' : '';
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${alumno.matricula}</td>
+                <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
+                <td>${genero}</td>
+            `;
 
-            // EVALUAR ASISTENCIAS DESDE BD
-            let asistioJueves = false;
-            let asistioLunes = false;
+            // Estructura para almacenar asistencias de las 4 sesiones
+            // { 1: {jueves: false, lunes: false}, 2: {jueves: false, lunes: false}, ... }
+            const sesiones = {
+                1: { jueves: false, lunes: false },
+                2: { jueves: false, lunes: false },
+                3: { jueves: false, lunes: false },
+                4: { jueves: false, lunes: false }
+            };
 
+            // 3. PROCESAR HISTORIAL DE ASISTENCIAS Y DETERMINAR LA SESIÓN DE CADA FECHA
             if (alumno.historial_asistencias && Array.isArray(alumno.historial_asistencias)) {
                 alumno.historial_asistencias.forEach(registro => {
                     const partes = registro.split(': ');
                     if (partes.length > 1) {
-                        const subpartes = partes[1].trim().split('-');
-                        if (subpartes.length >= 3) {
-                            const dia = parseInt(subpartes[0], 10);
-                            const mes = parseInt(subpartes[1], 10) - 1;
-                            const anio = parseInt(subpartes[2], 10);
+                        const fechaHoraStr = partes[1].trim();
+                        const match = fechaHoraStr.match(/^(\d{2})-(\d{2})-(\d{4})/);
+                        
+                        if (match) {
+                            const dia = parseInt(match[1], 10);
+                            const mes = parseInt(match[2], 10) - 1;
+                            const anio = parseInt(match[3], 10);
 
-                            const fechaObjeto = new Date(anio, mes, dia);
-                            const diaSemana = fechaObjeto.getDay();
+                            const fechaRegistro = new Date(anio, mes, dia);
+                            const diaSemana = fechaRegistro.getDay(); // 1: Lun, 4: Jue
 
-                            if (diaSemana === 4) asistioJueves = true;
-                            if (diaSemana === 1) asistioLunes = true;
+                            // Calcular diferencia de semanas desde la fecha de inicio
+                            const diffTiempo = fechaRegistro.getTime() - FECHA_INICIO_PARCIAL.getTime();
+                            const diffDias = Math.floor(diffTiempo / (1000 * 3600 * 24));
+                            
+                            // Determinar a qué número de sesión (1 a 4) corresponde la fecha
+                            let numSesion = Math.floor(diffDias / 7) + 1;
+                            if (numSesion < 1) numSesion = 1;
+                            if (numSesion > 4) numSesion = 4;
+
+                            // Registrar la asistencia en la sesión calculada
+                            if (diaSemana === 4) sesiones[numSesion].jueves = true;
+                            if (diaSemana === 1) sesiones[numSesion].lunes = true;
                         }
                     }
                 });
             }
 
-            // BLOQUE 1: DATOS FIJOS ALUMNO (VERDE)
-            let htmlFila = `
-                <td class="bg-verde">${i + 1}</td>
-                <td class="bg-verde">${alumno.matricula}</td>
-                <td class="bg-verde" style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td class="bg-verde">${generoLimpio}</td>
-            `;
-
-            // BLOQUE 2: LAS 4 SESIONES
+            // 4. RENDERIZAR LAS 4 SESIONES
             for (let s = 1; s <= 4; s++) {
-                if (s === 1) {
-                    htmlFila += `
-                        <td class="bg-amarillo-dia"></td> <!-- L -->
-                        <td class="bg-amarillo-dia"></td> <!-- M -->
-                        <td class="bg-amarillo-dia"></td> <!-- X -->
-                        <td class="bg-amarillo-dia" style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J -->
-                        <td class="bg-amarillo-dia"></td> <!-- V -->
-                        <td class="bg-amarillo-dia"></td> <!-- S -->
-                        <td class="bg-amarillo-dia">${esH}</td> <!-- H -->
-                        <td class="bg-amarillo-dia">${esM}</td> <!-- M -->
-                        <td class="bg-rosa-col" style="font-weight: bold;">${asistioLunes ? '1' : ''}</td> <!-- Rosa Magenta -->
-                    `;
-                } else {
-                    htmlFila += `
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-amarillo-dia"></td>
-                        <td class="bg-rosa-col"></td>
-                    `;
-                }
+                const dioJueves = sesiones[s].jueves;
+                const dioLunes = sesiones[s].lunes;
+
+                tr.innerHTML += `
+                    <td class="bg-amarillo-dia"></td>
+                    <td class="bg-amarillo-dia"></td>
+                    <td class="bg-amarillo-dia"></td>
+                    <td class="bg-amarillo-dia">${dioJueves ? '1' : ''}</td>
+                    <td class="bg-amarillo-dia"></td>
+                    <td class="bg-amarillo-dia"></td>
+                    <td class="bg-amarillo-dia">${dioJueves ? esH : ''}</td>
+                    <td class="bg-amarillo-dia">${dioJueves ? esM : ''}</td>
+                    <td class="bg-rosa-col">${dioLunes ? '1' : ''}</td>
+                `;
             }
 
-            // BLOQUE 3: OBSERVACIONES
-            htmlFila += `
+            // COLUMNAS FINALES DE OBSERVACIONES
+            tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
                 <td></td>
             `;
 
-            tr.innerHTML = htmlFila;
             cuerpoTabla.appendChild(tr);
         });
 
     } catch (error) {
-        console.error('Error al renderizar la tabla:', error);
+        console.error('Error al renderizar la vista de seguimiento:', error);
     }
 });
