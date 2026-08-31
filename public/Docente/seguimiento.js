@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR CON CELDAS EXTENSORAS VACÍAS A LA DERECHA
+// EXPORTADOR CON REESTRUCTURACIÓN DE CELDAS Y BORDES LIMPIOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
@@ -135,44 +135,44 @@ if (btnExportar) {
         let htmlTablaInfo = '';
         if (tablaInfo && tablaInfo !== tablaSeguimiento) {
             const clonInfo = tablaInfo.cloneNode(true);
-            clonInfo.setAttribute('border', '0');
+            clonInfo.removeAttribute('border');
             clonInfo.setAttribute('cellspacing', '0');
             clonInfo.setAttribute('cellpadding', '5');
+            clonInfo.setAttribute('style', 'border-collapse: collapse;');
 
-            clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
+            const filas = Array.from(clonInfo.querySelectorAll('tr'));
+
+            filas.forEach((tr, idx) => {
                 tr.setAttribute('height', '28');
                 const celdas = Array.from(tr.querySelectorAll('th, td'));
                 
                 if (idx === 0) {
-                    // Fila del título verde: abarca la Columna A y B
-                    const celdaTitulo = celdas[0];
-                    celdaTitulo.setAttribute('bgcolor', '#D9EAD3');
-                    celdaTitulo.setAttribute('colspan', '2');
-                    celdaTitulo.style.border = '1px solid #000000';
-                    celdaTitulo.innerHTML = `<b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>`;
-                    if (celdas.length > 1) celdas[1].remove();
+                    // Fila 1: Título "1. INFORMACIÓN GENERAL"
+                    // Ocupa Columna A, B y C (colspan=3) + celda fantasma transparente en D
+                    tr.innerHTML = `
+                        <td colspan="3" bgcolor="#D9EAD3" style="border: 1px solid #000000; text-align: left; padding-left: 8px;">
+                            <b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>
+                        </td>
+                        <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                    `;
                 } else {
-                    // Columna A: Etiqueta (Ej. "Persona Tutora")
-                    if (celdas[0]) {
-                        celdas[0].setAttribute('bgcolor', '#F3F3F3');
-                        celdas[0].style.border = '1px solid #000000';
-                        celdas[0].innerHTML = `<b><font color="#000000">${celdas[0].innerText.trim()}</font></b>`;
-                    }
-                    // Columna B: Valor con extensión libre
-                    if (celdas[1]) {
-                        celdas[1].setAttribute('bgcolor', '#FFFFFF');
-                        celdas[1].style.border = '1px solid #000000';
-                        celdas[1].innerHTML = `<font color="#000000">${celdas[1].innerText.trim()}</font>`;
-                    }
-                }
+                    const textoEtiqueta = celdas[0] ? celdas[0].innerText.trim() : '';
+                    const textoValor = celdas[1] ? celdas[1].innerText.trim() : '';
 
-                // TÉCNICA DE CELDA EXTENSORA VACÍA:
-                // Agregamos una 3ra celda en blanco a la derecha sin borde derecho visible
-                // Esto fuerza a Calc a tomar espacio de la Columna C sin encoger la B
-                const celdaExtensora = document.createElement('td');
-                celdaExtensora.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-                celdaExtensora.setAttribute('style', 'border: none; background: transparent;');
-                tr.appendChild(celdaExtensora);
+                    // Filas de datos: 
+                    // Columna A-B (colspan=2) para que la etiqueta tenga doble espacio y NO se corte
+                    // Columna C para el Valor
+                    // Columna D (Celda fantasma sin bordes ni líneas abajo)
+                    tr.innerHTML = `
+                        <td colspan="2" bgcolor="#F3F3F3" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
+                            <b><font color="#000000">${textoEtiqueta}</font></b>
+                        </td>
+                        <td bgcolor="#FFFFFF" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
+                            <font color="#000000">${textoValor}</font>
+                        </td>
+                        <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                    `;
+                }
             });
             htmlTablaInfo = clonInfo.outerHTML;
         }
@@ -183,13 +183,13 @@ if (btnExportar) {
         clonSeguimiento.setAttribute('cellspacing', '0');
         clonSeguimiento.setAttribute('cellpadding', '4');
 
-        const filas = clonSeguimiento.querySelectorAll('tr');
-        filas.forEach((fila, idx) => {
+        const filasSeg = clonSeguimiento.querySelectorAll('tr');
+        filasSeg.forEach((fila, idx) => {
             if (idx < 6) fila.setAttribute('height', '32');
             else fila.setAttribute('height', '26');
         });
 
-        filas.forEach(fila => {
+        filasSeg.forEach(fila => {
             fila.querySelectorAll('th, td').forEach(celda => {
                 celda.setAttribute('border', '1');
                 celda.style.border = '1px solid #000000';
