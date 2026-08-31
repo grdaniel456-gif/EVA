@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO DE INFORMACIÓN GENERAL
+        // 1. CONTEO DE HOMBRES Y MUJERES
         let totalHombres = 0;
         let totalMujeres = 0;
 
@@ -35,24 +35,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cuerpoTabla = document.getElementById('cuerpoTabla');
         cuerpoTabla.innerHTML = '';
 
-        // Fecha de inicio del parcial para calcular las 4 semanas/sesiones (Lunes 24 Agosto 2026)
+        // Lunes 24 Agosto 2026 (Semana 1)
         const FECHA_INICIO_PARCIAL = new Date(2026, 7, 24); 
 
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
-            
-            // Determinar Género visible para la columna principal
             const genero = String(alumno.genero || '').trim().toUpperCase();
 
-            // Celdas fijas de información del alumno
             tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td>${alumno.matricula}</td>
-                <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td style="font-weight: bold;">${genero}</td>
+                <td style="border: 1px solid #000; text-align: center;">${i + 1}</td>
+                <td style="border: 1px solid #000; text-align: center;">${alumno.matricula}</td>
+                <td style="border: 1px solid #000; text-align: left; padding-left: 5px;">${alumno.nombre}</td>
+                <td style="border: 1px solid #000; text-align: center; font-weight: bold;">${genero}</td>
             `;
 
-            // Matriz para guardar asistencias por cada una de las 4 sesiones
             const sesiones = {
                 1: { lunes: false, jueves: false },
                 2: { lunes: false, jueves: false },
@@ -60,7 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 4: { lunes: false, jueves: false }
             };
 
-            // 3. PROCESAR HISTORIAL DE ASISTENCIAS DE LA BASE DE DATOS
             if (alumno.historial_asistencias && Array.isArray(alumno.historial_asistencias)) {
                 alumno.historial_asistencias.forEach(registro => {
                     const partes = registro.split(': ');
@@ -74,9 +69,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const anio = parseInt(match[3], 10);
 
                             const fechaRegistro = new Date(anio, mes, dia);
-                            const diaSemana = fechaRegistro.getDay(); // 1: Lunes, 4: Jueves
+                            const diaSemana = fechaRegistro.getDay(); 
 
-                            // Calcular a qué semana / sesión pertenece la fecha
                             const diffTiempo = fechaRegistro.getTime() - FECHA_INICIO_PARCIAL.getTime();
                             const diffDias = Math.floor(diffTiempo / (1000 * 3600 * 24));
                             
@@ -91,34 +85,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // 4. GENERAR LAS 4 SESIONES
+            // RENDERIZAR LAS 4 SESIONES CON ESTILOS DE COLOR DIRECTOS (INLINE)
             for (let s = 1; s <= 4; s++) {
                 const asistioLunes = sesiones[s].lunes;
                 const asistioJueves = sesiones[s].jueves;
 
                 tr.innerHTML += `
-                    <!-- SUBCOLUMNAS DÍAS (L, M, X, J, V, S) -->
-                    <td class="bg-amarillo-dia"></td> <!-- L -->
-                    <td class="bg-amarillo-dia"></td> <!-- M -->
-                    <td class="bg-amarillo-dia"></td> <!-- X -->
-                    <td class="bg-amarillo-dia" style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J (Tutoría Grupal) -->
-                    <td class="bg-amarillo-dia"></td> <!-- V -->
-                    <td class="bg-amarillo-dia"></td> <!-- S -->
+                    <!-- SUBCOLUMNAS DÍAS (AMARILLO PASTEL #FFF2CC) -->
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioJueves ? '1' : ''}</td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     
                     <!-- SUBCOLUMNAS GÉNERO H / M -->
-                    <td class="bg-amarillo-dia">${genero === 'H' ? 'H' : ''}</td>
-                    <td class="bg-amarillo-dia">${genero === 'M' ? 'M' : ''}</td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'H' ? 'H' : ''}</td>
+                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'M' ? 'M' : ''}</td>
                     
-                    <!-- CASILLA ROSA: ASISTENCIA INDIVIDUAL (REGISTRA LOS LUNES) -->
-                    <td class="bg-rosa-col" style="font-weight: bold; text-align: center;">${asistioLunes ? '1' : ''}</td>
+                    <!-- CASILLA ROSA (#FF26A8) -->
+                    <td style="background-color: #ff26a8; color: #ffffff; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioLunes ? '1' : ''}</td>
                 `;
             }
 
-            // COLUMNAS FINALES DE OBSERVACIONES
             tr.innerHTML += `
-                <td><small>Seleccione</small></td>
-                <td><small>Seleccione</small></td>
-                <td></td>
+                <td style="border: 1px solid #000; text-align: center;"><small>Seleccione</small></td>
+                <td style="border: 1px solid #000; text-align: center;"><small>Seleccione</small></td>
+                <td style="border: 1px solid #000; text-align: center;"></td>
             `;
 
             cuerpoTabla.appendChild(tr);
@@ -130,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO PARA EXPORTAR A EXCEL MANTENIENDO COLORES Y BORDES
+// EVENTO DE EXPORTACIÓN DIRECTA CON FORMATO Y COLORES NATIVOS DE EXCEL
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
     const tabla = document.getElementById('tablaSeguimiento');
     if (!tabla) {
@@ -138,32 +131,9 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
         return;
     }
 
-    // 1. Clonar la tabla para inyectar estilos de color sin alterar la vista en pantalla
-    const tablaClon = tabla.cloneNode(true);
+    const htmlTabla = tabla.outerHTML;
 
-    // 2. Aplicar estilos inline directo a las celdas para que Excel reconozca los colores
-    tablaClon.querySelectorAll('.header-parcial').forEach(el => el.setAttribute('style', 'background-color: #d9d9d9; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.header-sesion').forEach(el => el.setAttribute('style', 'background-color: #efefef; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => el.setAttribute('style', 'background-color: #d9ead3; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.header-instruccion').forEach(el => el.setAttribute('style', 'background-color: #ffffff; color: #cc0000; font-size: 9px; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.bg-sub-grupal').forEach(el => el.setAttribute('style', 'background-color: #efefef; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.bg-sexo-header').forEach(el => el.setAttribute('style', 'background-color: #efefef; color: #cc0000; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.bg-rosa-header').forEach(el => el.setAttribute('style', 'background-color: #ff26a8; color: #ffffff; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.bg-asistencia-grupal').forEach(el => el.setAttribute('style', 'background-color: #efefef; color: #cc0000; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.bg-asistencia-ind').forEach(el => el.setAttribute('style', 'background-color: #ff26a8; color: #ffffff; font-weight: bold; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.bg-amarillo-dia').forEach(el => el.setAttribute('style', 'background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;'));
-    tablaClon.querySelectorAll('.bg-rosa-col').forEach(el => el.setAttribute('style', 'background-color: #ff26a8; border: 1px solid #000; text-align: center; font-weight: bold; color: #ffffff;'));
-    tablaClon.querySelectorAll('.col-h-m').forEach(el => el.setAttribute('style', 'background-color: #fff2cc; border: 1px solid #000; text-align: center;'));
-    tablaClon.querySelectorAll('.col-obs').forEach(el => el.setAttribute('style', 'background-color: #efefef; border: 1px solid #000; text-align: center;'));
-
-    // Bordes por defecto para celdas normales
-    tablaClon.querySelectorAll('td, th').forEach(el => {
-        if (!el.getAttribute('style')) {
-            el.setAttribute('style', 'border: 1px solid #000000; text-align: center;');
-        }
-    });
-
-    // 3. Crear el HTML compatible con Excel
+    // Plantilla con soporte MSO/HTML para que Excel pinte celdas, bordes y fuentes
     const plantillaExcel = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -184,14 +154,23 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
                 </x:ExcelWorkbook>
             </xml>
             <![endif]-->
+            <style>
+                table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; }
+                th, td { border: 1px solid #000000; text-align: center; vertical-align: middle; }
+                .header-parcial { background-color: #d9d9d9 !important; font-weight: bold; }
+                .header-sesion { background-color: #efefef !important; font-weight: bold; }
+                .header-estudiantil { background-color: #d9ead3 !important; font-weight: bold; }
+                .bg-rosa-header, .bg-asistencia-ind { background-color: #ff26a8 !important; color: #ffffff !important; font-weight: bold; }
+                .bg-rosa-col { background-color: #ff26a8 !important; color: #ffffff !important; font-weight: bold; }
+                .bg-amarillo-dia { background-color: #fff2cc !important; }
+            </style>
         </head>
         <body>
-            ${tablaClon.outerHTML}
+            ${htmlTabla}
         </body>
         </html>
     `;
 
-    // 4. Generar la descarga automática
     const blob = new Blob(['\ufeff' + plantillaExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
