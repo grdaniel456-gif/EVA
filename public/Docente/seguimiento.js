@@ -84,23 +84,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // RENDERIZAR LAS 4 SESIONES (L, M, X, J, V, S + SEXO + ROSA INDIVIDUAL)
+            // RENDERIZAR LAS 4 SESIONES EN PANTALLA
             for (let s = 1; s <= 4; s++) {
                 const asistioLunes = sesiones[s].lunes;
                 const asistioJueves = sesiones[s].jueves;
 
                 tr.innerHTML += `
-                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioJueves ? '1' : ''}</td>
-                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioJueves ? '1' : ''}</td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     
-                    <td class="col-h-m" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'H' ? 'H' : ''}</td>
-                    <td class="col-h-m" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'M' ? 'M' : ''}</td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'H' ? 'H' : ''}</td>
+                    <td class="celda-amarilla" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'M' ? 'M' : ''}</td>
                     
-                    <td class="bg-rosa-col" style="background-color: #ff26a8; color: #ffffff; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioLunes ? '1' : ''}</td>
+                    <td class="celda-rosa" style="background-color: #ff26a8; color: #ffffff; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioLunes ? '1' : ''}</td>
                 `;
             }
 
@@ -119,60 +119,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO DE EXPORTACIÓN FINAL (BORDES VISIBLES Y FORMATO COMPLETO IGUAL A LA IMAGEN)
+// EXPORTACIÓN A EXCEL / LIBREOFFICE CON BORDES NATIVOS Y COLORES FORZADOS
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
     const tablaSeguimiento = document.getElementById('tablaSeguimiento');
-    const tablaInfo = document.querySelector('.tabla-info') || document.querySelector('table');
-
     if (!tablaSeguimiento) {
         alert("No se encontró la tabla de seguimiento.");
         return;
     }
 
-    const clonInfo = tablaInfo && tablaInfo !== tablaSeguimiento ? tablaInfo.cloneNode(true) : null;
-    const clonSeguimiento = tablaSeguimiento.cloneNode(true);
+    // 1. Clonar la tabla HTML
+    const clon = tablaSeguimiento.cloneNode(true);
+    clon.setAttribute('border', '1');
 
-    // Preparar estilos y bordes para tabla de información superior
-    if (clonInfo) {
-        clonInfo.querySelectorAll('td, th').forEach(el => {
-            el.setAttribute('border', '1');
-            el.style.border = '1px solid #000000';
-            el.style.padding = '4px';
-        });
-    }
-
-    // Preparar estilos, fondos y BORDES NEGROS VISIBLES para la tabla principal
-    clonSeguimiento.querySelectorAll('.header-parcial').forEach(el => { el.setAttribute('bgcolor', '#D9D9D9'); el.style.backgroundColor = '#D9D9D9'; });
-    clonSeguimiento.querySelectorAll('.header-sesion').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
-    clonSeguimiento.querySelectorAll('.header-estudiantil').forEach(el => { el.setAttribute('bgcolor', '#D9EAD3'); el.style.backgroundColor = '#D9EAD3'; });
-    clonSeguimiento.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
-    clonSeguimiento.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind').forEach(el => {
-        el.setAttribute('bgcolor', '#FF26A8');
-        el.style.backgroundColor = '#FF26A8';
-        el.style.color = '#FFFFFF';
-    });
-
-    // PINTADO Y DIBUJO DE BORDES FILA POR FILA
-    const filas = clonSeguimiento.querySelectorAll('tr');
+    // 2. RECORRER ABSOLUTAMENTE TODAS LAS CELDAS DE LA TABLA Y APLICAR ATRIBUTOS DIRECTOS NATIVOS
+    const filas = clon.querySelectorAll('tr');
     filas.forEach(fila => {
         const celdas = fila.querySelectorAll('th, td');
         celdas.forEach(celda => {
-            if (celda.classList.contains('bg-amarillo-dia') || celda.classList.contains('col-h-m')) {
-                celda.setAttribute('bgcolor', '#FFF2CC');
-                celda.style.backgroundColor = '#FFF2CC';
-            } else if (celda.classList.contains('bg-rosa-col')) {
-                celda.setAttribute('bgcolor', '#FF26A8');
-                celda.style.backgroundColor = '#FF26A8';
-                celda.style.color = '#FFFFFF';
-            }
-            // Forzar bordes visibles en Excel / LibreOffice
+            // Asignar bordes negros obligatorios en HTML
             celda.setAttribute('border', '1');
             celda.style.border = '1px solid #000000';
             celda.style.verticalAlign = 'middle';
+
+            // Detectar y forzar colores por atributos nativos de HTML (compatibles 100% con LibreOffice)
+            const estilo = celda.getAttribute('style') || '';
+            const clase = celda.className || '';
+
+            if (estilo.includes('#fff2cc') || clase.includes('celda-amarilla') || clase.includes('bg-amarillo-dia') || clase.includes('col-h-m')) {
+                celda.setAttribute('bgcolor', '#FFF2CC');
+                celda.style.backgroundColor = '#FFF2CC';
+            } else if (estilo.includes('#ff26a8') || clase.includes('celda-rosa') || clase.includes('bg-rosa-col') || clase.includes('bg-rosa-header') || clase.includes('bg-asistencia-ind')) {
+                celda.setAttribute('bgcolor', '#FF26A8');
+                celda.style.backgroundColor = '#FF26A8';
+                celda.style.color = '#FFFFFF';
+            } else if (clase.includes('header-parcial')) {
+                celda.setAttribute('bgcolor', '#D9D9D9');
+                celda.style.backgroundColor = '#D9D9D9';
+            } else if (clase.includes('header-estudiantil')) {
+                celda.setAttribute('bgcolor', '#D9EAD3');
+                celda.style.backgroundColor = '#D9EAD3';
+            } else if (clase.includes('header-sesion') || clase.includes('bg-sub-grupal') || clase.includes('bg-sexo-header')) {
+                celda.setAttribute('bgcolor', '#EFEFEF');
+                celda.style.backgroundColor = '#EFEFEF';
+            }
         });
     });
 
-    const htmlFinal = `
+    // 3. ESTRUCTURA COMPATIBLE
+    const contenidoExcel = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
               xmlns="http://www.w3.org/TR/REC-html40">
@@ -193,21 +187,18 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
             </xml>
             <![endif]-->
             <style>
-                table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 10px; margin-bottom: 20px; }
+                table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 10px; }
                 td, th { border: 1px solid #000000 !important; text-align: center; vertical-align: middle; }
-                .bg-amarillo-dia, .col-h-m { background-color: #FFF2CC !important; }
-                .bg-rosa-col, .bg-rosa-header, .bg-asistencia-ind { background-color: #FF26A8 !important; color: #FFFFFF !important; }
             </style>
         </head>
         <body>
-            ${clonInfo ? clonInfo.outerHTML : ''}
-            <br>
-            ${clonSeguimiento.outerHTML}
+            ${clon.outerHTML}
         </body>
         </html>
     `;
 
-    const blob = new Blob(['\ufeff', htmlFinal], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    // 4. DESCARGAR ARVO XLS
+    const blob = new Blob(['\ufeff', contenidoExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
