@@ -130,18 +130,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO PARA DESCARGAR EN EXCEL
+// EVENTO PARA EXPORTAR A EXCEL DIRECTO (SIN LIBRERÍAS EXTERNAS)
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
-    // 1. Crear nuevo libro de Excel
-    const wb = XLSX.utils.book_new();
+    // 1. Obtener la tabla HTML de seguimiento
+    const tabla = document.getElementById('tablaSeguimiento');
+    if (!tabla) {
+        alert("No se encontró la tabla para exportar.");
+        return;
+    }
 
-    // 2. Convertir la tabla HTML completa
-    const tablaElement = document.getElementById('tablaSeguimiento');
-    const ws = XLSX.utils.table_to_sheet(tablaElement);
+    // 2. Construir la plantilla HTML/XML que Excel entiende nativamente
+    const htmlTabla = tabla.outerHTML.replace(/ /g, '%20');
+    const plantillaExcel = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+              xmlns:x="urn:schemas-microsoft-com:office:excel" 
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="UTF-8">
+            <!--[if gte mso 9]>
+            <xml>
+                <x:ExcelWorkbook>
+                    <x:ExcelWorksheets>
+                        <x:ExcelWorksheet>
+                            <x:Name>Seguimiento Académico</x:Name>
+                            <x:WorksheetOptions>
+                                <x:DisplayGridlines/>
+                            </x:WorksheetOptions>
+                        </x:ExcelWorksheet>
+                    </x:ExcelWorksheets>
+                </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+        </head>
+        <body>
+            ${tabla.outerHTML}
+        </body>
+        </html>
+    `;
 
-    // 3. Insertar hoja
-    XLSX.utils.book_append_sheet(wb, ws, "SEGUIMIENTO ACADÉMICO");
-
-    // 4. Descargar archivo
-    XLSX.writeFile(wb, "Seguimiento_Academico_7A.xlsx");
+    // 3. Crear enlace de descarga automática
+    const blob = new Blob(['\ufeff' + plantillaExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Seguimiento_Academico_7A.xls';
+    
+    // 4. Disparar la descarga
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 });
