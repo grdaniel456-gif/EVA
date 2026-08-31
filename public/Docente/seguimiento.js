@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const respuesta = await fetch('/api/seguimiento');
         const alumnos = await respuesta.json();
 
-        // 1. CONTEO DE HOMBRES Y MUJERES PARA EL BLOQUE DE INFORMACIÓN GENERAL
+        // 1. CONTEO DE HOMBRES Y MUJERES PARA INFORMACIÓN GENERAL
         let totalHombres = 0;
         let totalMujeres = 0;
 
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // EVALUAR ASISTENCIAS DESDE LA BASE DE DATOS
+            // EVALUAR ASISTENCIAS DESDE BD
             let asistioJueves = false;
             let asistioLunes = false;
 
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO (5 COLUMNAS) ---
+            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO ---
             // N° | MATRÍCULA | NOMBRE | SEXO H (BLANCO) | SEXO M (BLANCO)
             tr.innerHTML = `
                 <td>${i + 1}</td>
@@ -76,33 +76,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td></td> <!-- Sexo M en blanco -->
             `;
 
-            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS (9 COLUMNAS POR SESIÓN) ---
+            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS ---
+            // Estructura por sesión:
+            // 1. ASISTENCIA INDIVIDUAL (PINTADA DE ROSA CON .bg-rosa-col)
+            // 2. FECHA INDIVIDUAL
+            // 3. FECHA GRUPAL
+            // 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, M, J, V, S) -> CELDAS NORMALES
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
                     // SESIÓN 1
                     tr.innerHTML += `
-                        <!-- 1. FECHA INDIVIDUAL -->
-                        <td></td>
-                        
-                        <!-- 2. ASISTENCIA INDIVIDUAL (COLUMNA ROSA) -> Pone '1' si asistió el Lunes -->
+                        <!-- 1. ASISTENCIA INDIVIDUAL (ESTA ES LA QUE VA PINTADA DE ROSA) -->
                         <td class="bg-rosa-col" style="font-weight: bold;">${asistioLunes ? '1' : ''}</td>
+                        
+                        <!-- 2. FECHA INDIVIDUAL -->
+                        <td></td>
                         
                         <!-- 3. FECHA GRUPAL -->
                         <td></td>
                         
-                        <!-- 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, X=Miércoles, J, V, S) -->
-                        <td></td> <!-- L (Lunes) -->
-                        <td></td> <!-- M (Martes) -->
-                        <td></td> <!-- X (Miércoles - SIN PINTAR DE ROSA) -->
-                        <td style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J (Jueves) -->
-                        <td></td> <!-- V (Viernes) -->
-                        <td></td> <!-- S (Sábado) -->
+                        <!-- 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, M, J, V, S) -->
+                        <td></td> <!-- L -->
+                        <td></td> <!-- M -->
+                        <td></td> <!-- M (Miércoles -> Sin pintar) -->
+                        <td style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J -->
+                        <td></td> <!-- V -->
+                        <td></td> <!-- S -->
                     `;
                 } else {
                     // SESIONES 2, 3 Y 4 EN BLANCO
                     tr.innerHTML += `
-                        <td></td>
                         <td class="bg-rosa-col"></td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -114,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // --- BLOQUE 3: COLUMNAS FINALES DE OBSERVACIONES ---
+            // --- BLOQUE 3: COLUMNAS FINALES ---
             tr.innerHTML += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
@@ -125,6 +130,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al renderizar el seguimiento:', error);
+        console.error('Error al renderizar la tabla:', error);
     }
 });
