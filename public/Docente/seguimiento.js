@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
             const genero = (alumno.genero || 'H').toUpperCase();
-            const esH = genero === 'H' ? '1' : '';
-            const esM = genero === 'M' ? '1' : '';
+            const esH = genero === 'H' ? 'H' : '';
+            const esM = genero === 'M' ? 'M' : '';
 
             tr.innerHTML = `
                 <td>${i + 1}</td>
