@@ -130,17 +130,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO PARA EXPORTAR A EXCEL DIRECTO (SIN LIBRERÍAS EXTERNAS)
+// EVENTO PARA EXPORTAR A EXCEL MANTENIENDO COLORES Y BORDES
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
-    // 1. Obtener la tabla HTML de seguimiento
     const tabla = document.getElementById('tablaSeguimiento');
     if (!tabla) {
         alert("No se encontró la tabla para exportar.");
         return;
     }
 
-    // 2. Construir la plantilla HTML/XML que Excel entiende nativamente
-    const htmlTabla = tabla.outerHTML.replace(/ /g, '%20');
+    // 1. Clonar la tabla para inyectar estilos de color sin alterar la vista en pantalla
+    const tablaClon = tabla.cloneNode(true);
+
+    // 2. Aplicar estilos inline directo a las celdas para que Excel reconozca los colores
+    tablaClon.querySelectorAll('.header-parcial').forEach(el => el.setAttribute('style', 'background-color: #d9d9d9; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.header-sesion').forEach(el => el.setAttribute('style', 'background-color: #efefef; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => el.setAttribute('style', 'background-color: #d9ead3; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.header-instruccion').forEach(el => el.setAttribute('style', 'background-color: #ffffff; color: #cc0000; font-size: 9px; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.bg-sub-grupal').forEach(el => el.setAttribute('style', 'background-color: #efefef; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.bg-sexo-header').forEach(el => el.setAttribute('style', 'background-color: #efefef; color: #cc0000; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.bg-rosa-header').forEach(el => el.setAttribute('style', 'background-color: #ff26a8; color: #ffffff; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.bg-asistencia-grupal').forEach(el => el.setAttribute('style', 'background-color: #efefef; color: #cc0000; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.bg-asistencia-ind').forEach(el => el.setAttribute('style', 'background-color: #ff26a8; color: #ffffff; font-weight: bold; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.bg-amarillo-dia').forEach(el => el.setAttribute('style', 'background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;'));
+    tablaClon.querySelectorAll('.bg-rosa-col').forEach(el => el.setAttribute('style', 'background-color: #ff26a8; border: 1px solid #000; text-align: center; font-weight: bold; color: #ffffff;'));
+    tablaClon.querySelectorAll('.col-h-m').forEach(el => el.setAttribute('style', 'background-color: #fff2cc; border: 1px solid #000; text-align: center;'));
+    tablaClon.querySelectorAll('.col-obs').forEach(el => el.setAttribute('style', 'background-color: #efefef; border: 1px solid #000; text-align: center;'));
+
+    // Bordes por defecto para celdas normales
+    tablaClon.querySelectorAll('td, th').forEach(el => {
+        if (!el.getAttribute('style')) {
+            el.setAttribute('style', 'border: 1px solid #000000; text-align: center;');
+        }
+    });
+
+    // 3. Crear el HTML compatible con Excel
     const plantillaExcel = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -163,19 +186,18 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
             <![endif]-->
         </head>
         <body>
-            ${tabla.outerHTML}
+            ${tablaClon.outerHTML}
         </body>
         </html>
     `;
 
-    // 3. Crear enlace de descarga automática
+    // 4. Generar la descarga automática
     const blob = new Blob(['\ufeff' + plantillaExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'Seguimiento_Academico_7A.xls';
     
-    // 4. Disparar la descarga
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
