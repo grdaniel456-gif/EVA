@@ -128,3 +128,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Error al renderizar el seguimiento:', error);
     }
 });
+
+
+// EVENTO PARA DESCARGAR EN EXCEL
+document.getElementById('btnExportarExcel').addEventListener('click', () => {
+    // 1. Crear nuevo libro de Excel
+    const wb = XLSX.utils.book_new();
+
+    // 2. Convertir la tabla HTML completa
+    const tablaElement = document.getElementById('tablaSeguimiento');
+    const ws = XLSX.utils.table_to_sheet(tablaElement);
+
+    // 3. Insertar hoja
+    XLSX.utils.book_append_sheet(wb, ws, "SEGUIMIENTO ACADÉMICO");
+
+    // 4. Descargar archivo
+    XLSX.writeFile(wb, "Seguimiento_Academico_7A.xlsx");
+});
