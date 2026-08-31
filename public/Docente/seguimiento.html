@@ -49,121 +49,130 @@
 
 
 
-        <!-- BLOQUE 2: TABLA PRINCIPAL DEL SEGUIMIENTO -->
-        <div class="scroll-tabla">
-            <table class="tabla-seguimiento">
-                <thead>
-                    <!-- FILA 1: PARCIAL -->
-                    <tr>
-                        <th rowspan="6" class="col-n header-estudiantil">N°</th>
-                        <th rowspan="6" class="col-mat header-estudiantil">MATRÍCULA</th>
-                        <th rowspan="6" class="col-nom header-estudiantil">NOMBRE DEL ALUMNO</th>
-                        <th rowspan="6" class="col-sexo header-estudiantil">SEXO<br>H/M</th>
-                        <th colspan="32" class="header-parcial">PRIMER PARCIAL</th>
-                        <th rowspan="6" class="col-obs">Razon de inasistencia<br>a Tutoría Grupal</th>
-                        <th rowspan="6" class="col-obs">Acciones<br>implementadas</th>
-                        <th rowspan="6" class="col-obs">Observaciones</th>
-                    </tr>
+       <thead>
+    <!-- FILA 1: ENCABEZADOS DE BLOQUE SUPERIORES -->
+    <tr>
+        <th colspan="4" class="header-estudiantil bg-verde">2.INFORMACIÓN ESTUDIANTIL</th>
+        <th colspan="32" class="header-parcial bg-gris">PRIMER PARCIAL</th>
+        <th rowspan="3" class="header-estudiantil bg-gris">Razón de inasistencia<br>a Tutoría Grupal</th>
+        <th rowspan="3" class="header-estudiantil bg-gris">Acciones<br>implementadas</th>
+        <th rowspan="3" class="header-estudiantil bg-gris">Observaciones</th>
+    </tr>
 
-                    <!-- FILA 2: SESIONES -->
-                    <tr>
-                        <th colspan="8" class="header-sesion">SESIÓN 1</th>
-                        <th colspan="8" class="header-sesion">SESIÓN 2</th>
-                        <th colspan="8" class="header-sesion">SESIÓN 3</th>
-                        <th colspan="8" class="header-sesion">SESIÓN 4</th>
-                    </tr>
+    <!-- FILA 2: FECHA GRUPAL / SEXO / FECHA INDIVIDUAL (Repetido por cada Sesión) -->
+    <tr>
+        <!-- Celdas Alumno -->
+        <th rowspan="2" class="bg-verde col-n">N°</th>
+        <th rowspan="2" class="bg-verde col-mat">MATRÍCULA</th>
+        <th rowspan="2" class="bg-verde col-nom">NOMBRE DEL ALUMNO</th>
+        <th rowspan="2" class="bg-verde col-sexo">SEXO<br><small>H-M</small></th>
 
-                    <!-- FILA 3: INDICACIONES ACTIVIDAD -->
-                    <tr>
-                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 1</th>
-                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 2</th>
-                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 3</th>
-                        <th colspan="8" class="header-instruccion">Escriba en la celda de abajo (color blanco) el nombre de la actividad 4</th>
-                    </tr>
+        <!-- SESIÓN 1 -->
+        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL:<br><small>DD/MM/AAAA</small></th>
+        <th colspan="2" class="bg-amarillo-header texto-rojo">SEXO</th>
+        <th class="bg-rosa-header">FECHA INDIVIDUAL:<br><small>DD/MM/AAAA</small></th>
 
-                    <!-- FILA 4: SUB-ENCABEZADOS GRUPAL / INDIVIDUAL -->
-                    <tr>
-                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL:<br>DD/MM/AAAA</th>
-                        <th class="bg-sexo-header">SEXO</th>
-                        <th class="bg-rosa-header">FECHA INDIVIDUAL<br>DD/MM/AAAA</th>
+        <!-- SESIÓN 2 -->
+        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL:</th>
+        <th colspan="2" class="bg-amarillo-header texto-rojo">SEXO</th>
+        <th class="bg-rosa-header">FECHA INDIVIDUAL:</th>
 
-                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL</th>
-                        <th class="bg-sexo-header">SEXO</th>
-                        <th class="bg-rosa-header">FECHA INDIVIDUAL</th>
+        <!-- SESIÓN 3 -->
+        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL:</th>
+        <th colspan="2" class="bg-amarillo-header texto-rojo">SEXO</th>
+        <th class="bg-rosa-header">FECHA INDIVIDUAL:</th>
 
-                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL</th>
-                        <th class="bg-sexo-header">SEXO</th>
-                        <th class="bg-rosa-header">FECHA INDIVIDUAL</th>
+        <!-- SESIÓN 4 -->
+        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL:</th>
+        <th colspan="2" class="bg-amarillo-header texto-rojo">SEXO</th>
+        <th class="bg-rosa-header">FECHA INDIVIDUAL:</th>
+    </tr>
 
-                        <th colspan="6" class="bg-sub-grupal">FECHA GRUPAL</th>
-                        <th class="bg-sexo-header">SEXO</th>
-                        <th class="bg-rosa-header">FECHA INDIVIDUAL</th>
-                    </tr>
+    <!-- FILA 3: ASISTENCIA GRUPAL / H / M / ASISTENCIA INDIVIDUAL -->
+    <tr>
+        <!-- SESIÓN 1 -->
+        <th colspan="6" class="bg-sub-grupal texto-rojo">ASISTENCIA GRUPAL</th>
+        <th class="bg-amarillo-dia col-hm">H</th>
+        <th class="bg-amarillo-dia col-hm">M</th>
+        <th class="bg-rosa-header">ASISTENCIA INDIVIDUAL</th>
 
-                    <!-- FILA 5: TUTORÍA GRUPAL / INDIVIDUAL -->
-                    <tr>
-                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
-                        <th rowspan="2" class="col-h-m">H</th>
-                        <th rowspan="2" class="col-h-m">M</th>
-                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+        <!-- SESIÓN 2 -->
+        <th colspan="6" class="bg-sub-grupal texto-rojo">ASISTENCIA GRUPAL</th>
+        <th class="bg-amarillo-dia col-hm">H</th>
+        <th class="bg-amarillo-dia col-hm">M</th>
+        <th class="bg-rosa-header">ASISTENCIA INDIVIDUAL</th>
 
-                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
-                        <th rowspan="2" class="col-h-m">H</th>
-                        <th rowspan="2" class="col-h-m">M</th>
-                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+        <!-- SESIÓN 3 -->
+        <th colspan="6" class="bg-sub-grupal texto-rojo">ASISTENCIA GRUPAL</th>
+        <th class="bg-amarillo-dia col-hm">H</th>
+        <th class="bg-amarillo-dia col-hm">M</th>
+        <th class="bg-rosa-header">ASISTENCIA INDIVIDUAL</th>
 
-                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
-                        <th rowspan="2" class="col-h-m">H</th>
-                        <th rowspan="2" class="col-h-m">M</th>
-                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
+        <!-- SESIÓN 4 -->
+        <th colspan="6" class="bg-sub-grupal texto-rojo">ASISTENCIA GRUPAL</th>
+        <th class="bg-amarillo-dia col-hm">H</th>
+        <th class="bg-amarillo-dia col-hm">M</th>
+        <th class="bg-rosa-header">ASISTENCIA INDIVIDUAL</th>
+    </tr>
 
-                        <th colspan="6" class="bg-asistencia-grupal">ASISTENCIA GRUPAL</th>
-                        <th rowspan="2" class="col-h-m">H</th>
-                        <th rowspan="2" class="col-h-m">M</th>
-                        <th class="bg-asistencia-ind">ASISTENCIA INDIVIDUAL</th>
-                    </tr>
+    <!-- FILA 4: SUB-COLUMNAS DÍAS (L, M, X, J, V, S) -->
+    <tr>
+        <!-- Celdas vacías para nivelar las filas superiores del alumno -->
+        <td class="bg-verde"></td>
+        <td class="bg-verde"></td>
+        <td class="bg-verde"></td>
+        <td class="bg-verde"></td>
 
-                    <!-- FILA 6: DÍAS (L, M, X, J, V, S) -->
-                    <tr>
-                        <th class="col-dia bg-amarillo-dia">L</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">J</th>
-                        <th class="col-dia bg-amarillo-dia">V</th>
-                        <th class="col-dia bg-amarillo-dia">S</th>
-                        <th class="bg-rosa-col"></th>
+        <!-- SESIÓN 1 -->
+        <th class="bg-amarillo-dia col-dia">L</th>
+        <th class="bg-amarillo-dia col-dia">M</th>
+        <th class="bg-amarillo-dia col-dia">X</th>
+        <th class="bg-amarillo-dia col-dia">J</th>
+        <th class="bg-amarillo-dia col-dia">V</th>
+        <th class="bg-amarillo-dia col-dia">S</th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-rosa-col"></th>
 
-                        <th class="col-dia bg-amarillo-dia">L</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">J</th>
-                        <th class="col-dia bg-amarillo-dia">V</th>
-                        <th class="col-dia bg-amarillo-dia">S</th>
-                        <th class="bg-rosa-col"></th>
+        <!-- SESIÓN 2 -->
+        <th class="bg-amarillo-dia col-dia">L</th>
+        <th class="bg-amarillo-dia col-dia">M</th>
+        <th class="bg-amarillo-dia col-dia">X</th>
+        <th class="bg-amarillo-dia col-dia">J</th>
+        <th class="bg-amarillo-dia col-dia">V</th>
+        <th class="bg-amarillo-dia col-dia">S</th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-rosa-col"></th>
 
-                        <th class="col-dia bg-amarillo-dia">L</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">J</th>
-                        <th class="col-dia bg-amarillo-dia">V</th>
-                        <th class="col-dia bg-amarillo-dia">S</th>
-                        <th class="bg-rosa-col"></th>
+        <!-- SESIÓN 3 -->
+        <th class="bg-amarillo-dia col-dia">L</th>
+        <th class="bg-amarillo-dia col-dia">M</th>
+        <th class="bg-amarillo-dia col-dia">X</th>
+        <th class="bg-amarillo-dia col-dia">J</th>
+        <th class="bg-amarillo-dia col-dia">V</th>
+        <th class="bg-amarillo-dia col-dia">S</th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-rosa-col"></th>
 
-                        <th class="col-dia bg-amarillo-dia">L</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">M</th>
-                        <th class="col-dia bg-amarillo-dia">J</th>
-                        <th class="col-dia bg-amarillo-dia">V</th>
-                        <th class="col-dia bg-amarillo-dia">S</th>
-                        <th class="bg-rosa-col"></th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpoTabla">
-                    <!-- Generado dinámicamente con JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <!-- SESIÓN 4 -->
+        <th class="bg-amarillo-dia col-dia">L</th>
+        <th class="bg-amarillo-dia col-dia">M</th>
+        <th class="bg-amarillo-dia col-dia">X</th>
+        <th class="bg-amarillo-dia col-dia">J</th>
+        <th class="bg-amarillo-dia col-dia">V</th>
+        <th class="bg-amarillo-dia col-dia">S</th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-amarillo-dia col-hm"></th>
+        <th class="bg-rosa-col"></th>
+
+        <!-- Celdas vacías para nivelar observaciones -->
+        <td class="bg-gris"></td>
+        <td class="bg-gris"></td>
+        <td class="bg-gris"></td>
+    </tr>
+</thead>
 
     <script src="seguimiento.js"></script>
 </body>

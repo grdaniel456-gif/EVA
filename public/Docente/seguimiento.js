@@ -39,8 +39,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!cuerpoTabla) return;
         cuerpoTabla.innerHTML = '';
 
+        // 3. RENDERIZAR FILAS CON ESTILOS Y ESTRUCTURA DE EXCEL CORREGIDA
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
+
+            // Determinar marcas de Sexo (H/M)
+            const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
+            const esH = generoLimpio === 'H' ? '1' : '';
+            const esM = generoLimpio === 'M' ? '1' : '';
 
             // EVALUAR ASISTENCIAS DESDE BD
             let asistioJueves = false;
@@ -66,66 +72,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // --- BLOQUE 1: DATOS FIJOS DEL ALUMNO ---
-            // N° | MATRÍCULA | NOMBRE | SEXO H (BLANCO) | SEXO M (BLANCO)
-            tr.innerHTML = `
-                <td>${i + 1}</td>
-                <td>${alumno.matricula}</td>
-                <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td></td> <!-- Sexo H en blanco -->
-                <td></td> <!-- Sexo M en blanco -->
+            // A) BLOQUE 1: DATOS FIJOS DEL ALUMNO (VERDE DE LA PLANTILLA)
+            let htmlFila = `
+                <td class="bg-verde">${i + 1}</td>
+                <td class="bg-verde">${alumno.matricula}</td>
+                <td class="bg-verde" style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
+                <td class="bg-verde">${generoLimpio}</td>
             `;
 
-            // --- BLOQUE 2: LAS 4 SESIONES DINÁMICAS ---
+            // B) BLOQUE 2: LAS 4 SESIONES DINÁMICAS (AMARILLO Y MAGENTA)
             // Estructura por sesión:
-            // 1. ASISTENCIA INDIVIDUAL (PINTADA DE ROSA CON .bg-rosa-col)
-            // 2. FECHA INDIVIDUAL
-            // 3. FECHA GRUPAL
-            // 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, M, J, V, S) -> CELDAS NORMALES
+            // - Días: L, M, X, J, V, S (Fondo Amarillo)
+            // - Sexo: H, M (Fondo Amarillo)
+            // - Asistencia Individual (Fondo Rosa Magenta Completo)
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
-                    // SESIÓN 1
-                    tr.innerHTML += `
-                        <!-- 1. ASISTENCIA INDIVIDUAL (ESTA ES LA QUE VA PINTADA DE ROSA) -->
-                        <td class="bg-rosa-col" style="font-weight: bold;">${asistioLunes ? '1' : ''}</td>
-                        
-                        <!-- 2. FECHA INDIVIDUAL -->
-                        <td></td>
-                        
-                        <!-- 3. FECHA GRUPAL -->
-                        <td></td>
-                        
-                        <!-- 4 a 9. DÍAS DE ASISTENCIA GRUPAL (L, M, M, J, V, S) -->
-                        <td></td> <!-- L -->
-                        <td></td> <!-- M -->
-                        <td></td> <!-- M (Miércoles -> Sin pintar) -->
-                        <td style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J -->
-                        <td></td> <!-- V -->
-                        <td></td> <!-- S -->
+                    htmlFila += `
+                        <td class="bg-amarillo-dia"></td> <!-- L -->
+                        <td class="bg-amarillo-dia"></td> <!-- M -->
+                        <td class="bg-amarillo-dia"></td> <!-- X -->
+                        <td class="bg-amarillo-dia" style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J -->
+                        <td class="bg-amarillo-dia"></td> <!-- V -->
+                        <td class="bg-amarillo-dia"></td> <!-- S -->
+                        <td class="bg-amarillo-dia">${esH}</td> <!-- H -->
+                        <td class="bg-amarillo-dia">${esM}</td> <!-- M -->
+                        <td class="bg-rosa-col" style="font-weight: bold;">${asistioLunes ? '1' : ''}</td> <!-- Rosa Magenta -->
                     `;
                 } else {
-                    // SESIONES 2, 3 Y 4 EN BLANCO
-                    tr.innerHTML += `
+                    htmlFila += `
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
+                        <td class="bg-amarillo-dia"></td>
                         <td class="bg-rosa-col"></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
                     `;
                 }
             }
 
-            // --- BLOQUE 3: COLUMNAS FINALES ---
-            tr.innerHTML += `
+            // C) BLOQUE 3: COLUMNAS FINALES (OBSERVACIONES)
+            htmlFila += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
                 <td></td>
             `;
 
+            tr.innerHTML = htmlFila;
             cuerpoTabla.appendChild(tr);
         });
 
