@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR CON TABLA SEPARADA Y FORZADO DE COLUMNAS ANCHAS
+// EXPORTADOR CON CELDAS EXTENSORAS VACÍAS A LA DERECHA
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
@@ -135,38 +135,44 @@ if (btnExportar) {
         let htmlTablaInfo = '';
         if (tablaInfo && tablaInfo !== tablaSeguimiento) {
             const clonInfo = tablaInfo.cloneNode(true);
-            clonInfo.setAttribute('border', '1');
+            clonInfo.setAttribute('border', '0');
             clonInfo.setAttribute('cellspacing', '0');
             clonInfo.setAttribute('cellpadding', '5');
 
-            // Insertar colgroup obligatorio para forzar anchos en LibreOffice Calc
-            const colgroup = document.createElement('colgroup');
-            colgroup.innerHTML = '<col width="220"><col width="330">';
-            clonInfo.insertBefore(colgroup, clonInfo.firstChild);
-
             clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
                 tr.setAttribute('height', '28');
-                const celdas = tr.querySelectorAll('th, td');
+                const celdas = Array.from(tr.querySelectorAll('th, td'));
                 
                 if (idx === 0) {
+                    // Fila del título verde: abarca la Columna A y B
                     const celdaTitulo = celdas[0];
                     celdaTitulo.setAttribute('bgcolor', '#D9EAD3');
                     celdaTitulo.setAttribute('colspan', '2');
-                    celdaTitulo.setAttribute('width', '550');
+                    celdaTitulo.style.border = '1px solid #000000';
                     celdaTitulo.innerHTML = `<b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>`;
                     if (celdas.length > 1) celdas[1].remove();
                 } else {
+                    // Columna A: Etiqueta (Ej. "Persona Tutora")
                     if (celdas[0]) {
                         celdas[0].setAttribute('bgcolor', '#F3F3F3');
-                        celdas[0].setAttribute('width', '220');
+                        celdas[0].style.border = '1px solid #000000';
                         celdas[0].innerHTML = `<b><font color="#000000">${celdas[0].innerText.trim()}</font></b>`;
                     }
+                    // Columna B: Valor con extensión libre
                     if (celdas[1]) {
                         celdas[1].setAttribute('bgcolor', '#FFFFFF');
-                        celdas[1].setAttribute('width', '330');
+                        celdas[1].style.border = '1px solid #000000';
                         celdas[1].innerHTML = `<font color="#000000">${celdas[1].innerText.trim()}</font>`;
                     }
                 }
+
+                // TÉCNICA DE CELDA EXTENSORA VACÍA:
+                // Agregamos una 3ra celda en blanco a la derecha sin borde derecho visible
+                // Esto fuerza a Calc a tomar espacio de la Columna C sin encoger la B
+                const celdaExtensora = document.createElement('td');
+                celdaExtensora.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                celdaExtensora.setAttribute('style', 'border: none; background: transparent;');
+                tr.appendChild(celdaExtensora);
             });
             htmlTablaInfo = clonInfo.outerHTML;
         }
@@ -177,14 +183,12 @@ if (btnExportar) {
         clonSeguimiento.setAttribute('cellspacing', '0');
         clonSeguimiento.setAttribute('cellpadding', '4');
 
-        // Modificar filas de la tabla 2
         const filas = clonSeguimiento.querySelectorAll('tr');
         filas.forEach((fila, idx) => {
             if (idx < 6) fila.setAttribute('height', '32');
             else fila.setAttribute('height', '26');
         });
 
-        // Aplicar etiquetas FONT rojas y colores de fondo
         filas.forEach(fila => {
             fila.querySelectorAll('th, td').forEach(celda => {
                 celda.setAttribute('border', '1');
@@ -228,7 +232,7 @@ if (btnExportar) {
             });
         });
 
-        // 3. ESTRUCTURA COMPATIBLE
+        // 3. ESTRUCTURA EXCEL HTML NATIVA
         const contenidoExcel = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" 
                   xmlns:x="urn:schemas-microsoft-com:office:excel" 
