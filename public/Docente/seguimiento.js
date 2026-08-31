@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO PARA EXPORTAR A EXCEL / LIBREOFFICE CON COLORES Y ANCHOS CORRECTOS
+/// EVENTO FINAL DE EXPORTACIÓN (PINTA TODAS LAS FILAS DE LA TABLA EN EXCEL / LIBREOFFICE)
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
     const tabla = document.getElementById('tablaSeguimiento');
     if (!tabla) {
@@ -131,26 +131,44 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
         return;
     }
 
-    // 1. Clonar la tabla HTML para aplicar atributos bgcolor nativos que Calc/Excel entiendan
+    // 1. Clonar la tabla HTML completa
     const tablaClon = tabla.cloneNode(true);
 
-    // Asignar fondo mediante atributo 'bgcolor' explícito (100% compatible con LibreOffice Calc y Excel)
-    tablaClon.querySelectorAll('.header-parcial').forEach(el => { el.setAttribute('bgcolor', '#D9D9D9'); el.style.backgroundColor = '#D9D9D9'; });
-    tablaClon.querySelectorAll('.header-sesion').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
-    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => { el.setAttribute('bgcolor', '#D9EAD3'); el.style.backgroundColor = '#D9EAD3'; });
-    tablaClon.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind, .bg-rosa-col').forEach(el => { el.setAttribute('bgcolor', '#FF26A8'); el.style.backgroundColor = '#FF26A8'; el.style.color = '#FFFFFF'; });
-    tablaClon.querySelectorAll('.bg-amarillo-dia, .col-h-m').forEach(el => { el.setAttribute('bgcolor', '#FFF2CC'); el.style.backgroundColor = '#FFF2CC'; });
-    tablaClon.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
-
-    // Asegurar bordes y alineación en todas las celdas
-    tablaClon.querySelectorAll('td, th').forEach(el => {
-        el.setAttribute('border', '1');
-        el.style.border = '1px solid #000000';
-        el.style.textAlign = 'center';
-        el.style.verticalAlign = 'middle';
+    // 2. PINTE OBLIGATORIO DE ENCABEZADOS
+    tablaClon.querySelectorAll('.header-parcial').forEach(el => el.setAttribute('bgcolor', '#D9D9D9'));
+    tablaClon.querySelectorAll('.header-sesion').forEach(el => el.setAttribute('bgcolor', '#EFEFEF'));
+    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => el.setAttribute('bgcolor', '#D9EAD3'));
+    tablaClon.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => el.setAttribute('bgcolor', '#EFEFEF'));
+    tablaClon.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind').forEach(el => {
+        el.setAttribute('bgcolor', '#FF26A8');
+        el.style.color = '#FFFFFF';
     });
 
-    // 2. Armar el XML/HTML con directivas de Microsoft Office y LibreOffice Calc
+    // 3. RECORRER TODAS LAS FILAS Y CELDAS DEL CUERPO (TBODY) PARA PINTAR CADA ALUMNO
+    const filas = tablaClon.querySelectorAll('tbody tr');
+    filas.forEach(fila => {
+        const celdas = fila.querySelectorAll('td');
+        celdas.forEach(celda => {
+            // Pintar celdas amarillas (Días L, M, X, J, V, S y Sexo)
+            if (celda.classList.contains('bg-amarillo-dia') || celda.classList.contains('col-h-m')) {
+                celda.setAttribute('bgcolor', '#FFF2CC');
+                celda.style.backgroundColor = '#FFF2CC';
+            }
+            // Pintar celdas rosas (Asistencia Individual Lunes)
+            else if (celda.classList.contains('bg-rosa-col')) {
+                celda.setAttribute('bgcolor', '#FF26A8');
+                celda.style.backgroundColor = '#FF26A8';
+                celda.style.color = '#FFFFFF';
+            }
+            // Bordes y alineación básica para todas las celdas de alumnos
+            celda.setAttribute('border', '1');
+            celda.style.border = '1px solid #000000';
+            celda.style.textAlign = 'center';
+            celda.style.verticalAlign = 'middle';
+        });
+    });
+
+    // 4. ESTRUCTURA COMPATIBLE CON LIBREOFFICE CALC Y EXCEL
     const contenidoExcel = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -172,12 +190,10 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
             </xml>
             <![endif]-->
             <style>
-                table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11px; }
-                td, th { border: 1px solid #000000 !important; text-align: center; min-width: 30px; height: 22px; }
-                .bg-rosa-col, .bg-rosa-header, .bg-asistencia-ind { background-color: #FF26A8 !important; color: #FFFFFF !important; }
+                table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; }
+                td, th { border: 1px solid #000000; text-align: center; vertical-align: middle; }
                 .bg-amarillo-dia { background-color: #FFF2CC !important; }
-                .header-parcial { background-color: #D9D9D9 !important; }
-                .header-estudiantil { background-color: #D9EAD3 !important; }
+                .bg-rosa-col { background-color: #FF26A8 !important; color: #FFFFFF !important; }
             </style>
         </head>
         <body>
@@ -186,7 +202,7 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
         </html>
     `;
 
-    // 3. Crear el Blob con BOM UTF-8 (\ufeff) para evitar caracteres raros y descargar
+    // 5. Descarga automática en formato .xls
     const blob = new Blob(['\ufeff', contenidoExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
