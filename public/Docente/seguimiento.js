@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tr = document.createElement('tr');
 
             const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
-            const esH = generoLimpio === 'H' ? '1' : '';
-            const esM = generoLimpio === 'M' ? '1' : '';
+            const esH = generoLimpio === 'H' ? 'H' : '';
+            const esM = generoLimpio === 'M' ? 'M' : '';
 
             // EVALUAR ASISTENCIAS DESDE BD
             let asistioJueves = false;
