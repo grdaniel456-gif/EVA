@@ -127,3 +127,41 @@ body {
 .col-mat { width: 85px; }
 .col-nom { width: 220px; text-align: left; }
 .col-sexo { width: 45px; }
+
+.texto-instruccion-rojo {
+    color: #cc0000;
+    font-size: 8px;
+    font-weight: normal;
+    background-color: #ffffff;
+    text-align: center;
+    padding: 2px 4px;
+    white-space: normal;
+}
+
+/* Títulos de Sesión y Parcial */
+.header-parcial {
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding: 6px;
+}
+
+.header-sesion {
+    font-weight: bold;
+    color: #990000;
+    font-size: 13px;
+    padding: 4px;
+}
+
+/* Leyenda de Instrucción en Rojo */
+.texto-instruccion-rojo {
+    background-color: #ffffff !important;
+    color: #cc0000;
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+    padding: 4px 6px;
+    white-space: normal;
+    line-height: 1.1;
+    border: 1px solid #777;
+}
