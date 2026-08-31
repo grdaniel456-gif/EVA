@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO DE EXPORTACIÓN DIRECTA CON FORMATO Y COLORES NATIVOS DE EXCEL
+// EVENTO PARA EXPORTAR A EXCEL / LIBREOFFICE CON COLORES Y ANCHOS CORRECTOS
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
     const tabla = document.getElementById('tablaSeguimiento');
     if (!tabla) {
@@ -131,15 +131,32 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
         return;
     }
 
-    const htmlTabla = tabla.outerHTML;
+    // 1. Clonar la tabla HTML para aplicar atributos bgcolor nativos que Calc/Excel entiendan
+    const tablaClon = tabla.cloneNode(true);
 
-    // Plantilla con soporte MSO/HTML para que Excel pinte celdas, bordes y fuentes
-    const plantillaExcel = `
+    // Asignar fondo mediante atributo 'bgcolor' explícito (100% compatible con LibreOffice Calc y Excel)
+    tablaClon.querySelectorAll('.header-parcial').forEach(el => { el.setAttribute('bgcolor', '#D9D9D9'); el.style.backgroundColor = '#D9D9D9'; });
+    tablaClon.querySelectorAll('.header-sesion').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
+    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => { el.setAttribute('bgcolor', '#D9EAD3'); el.style.backgroundColor = '#D9EAD3'; });
+    tablaClon.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind, .bg-rosa-col').forEach(el => { el.setAttribute('bgcolor', '#FF26A8'); el.style.backgroundColor = '#FF26A8'; el.style.color = '#FFFFFF'; });
+    tablaClon.querySelectorAll('.bg-amarillo-dia, .col-h-m').forEach(el => { el.setAttribute('bgcolor', '#FFF2CC'); el.style.backgroundColor = '#FFF2CC'; });
+    tablaClon.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
+
+    // Asegurar bordes y alineación en todas las celdas
+    tablaClon.querySelectorAll('td, th').forEach(el => {
+        el.setAttribute('border', '1');
+        el.style.border = '1px solid #000000';
+        el.style.textAlign = 'center';
+        el.style.verticalAlign = 'middle';
+    });
+
+    // 2. Armar el XML/HTML con directivas de Microsoft Office y LibreOffice Calc
+    const contenidoExcel = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
               xmlns="http://www.w3.org/TR/REC-html40">
         <head>
-            <meta charset="UTF-8">
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <!--[if gte mso 9]>
             <xml>
                 <x:ExcelWorkbook>
@@ -155,23 +172,22 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
             </xml>
             <![endif]-->
             <style>
-                table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; }
-                th, td { border: 1px solid #000000; text-align: center; vertical-align: middle; }
-                .header-parcial { background-color: #d9d9d9 !important; font-weight: bold; }
-                .header-sesion { background-color: #efefef !important; font-weight: bold; }
-                .header-estudiantil { background-color: #d9ead3 !important; font-weight: bold; }
-                .bg-rosa-header, .bg-asistencia-ind { background-color: #ff26a8 !important; color: #ffffff !important; font-weight: bold; }
-                .bg-rosa-col { background-color: #ff26a8 !important; color: #ffffff !important; font-weight: bold; }
-                .bg-amarillo-dia { background-color: #fff2cc !important; }
+                table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11px; }
+                td, th { border: 1px solid #000000 !important; text-align: center; min-width: 30px; height: 22px; }
+                .bg-rosa-col, .bg-rosa-header, .bg-asistencia-ind { background-color: #FF26A8 !important; color: #FFFFFF !important; }
+                .bg-amarillo-dia { background-color: #FFF2CC !important; }
+                .header-parcial { background-color: #D9D9D9 !important; }
+                .header-estudiantil { background-color: #D9EAD3 !important; }
             </style>
         </head>
         <body>
-            ${htmlTabla}
+            ${tablaClon.outerHTML}
         </body>
         </html>
     `;
 
-    const blob = new Blob(['\ufeff' + plantillaExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    // 3. Crear el Blob con BOM UTF-8 (\ufeff) para evitar caracteres raros y descargar
+    const blob = new Blob(['\ufeff', contenidoExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
