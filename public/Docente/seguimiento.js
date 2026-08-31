@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
 
-                // Renderizado 4 sesiones
+                // Renderizado de las 4 sesiones
                 for (let s = 1; s <= 4; s++) {
                     const asistioLunes = sesiones[s].lunes;
                     const asistioJueves = sesiones[s].jueves;
@@ -126,125 +126,111 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// FUNCIÓN EXPORTADORA AJUSTADA A LA IMAGEN WEB EXACTA
+// FUNCIÓN DE EXPORTACIÓN EXACTA CON COLORES ROJOS Y VERDES NATIVOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
-        const tablaInfo = document.querySelector('.tabla-info') || document.querySelectorAll('table')[0];
-        const tablaSeguimiento = document.getElementById('tablaSeguimiento') || document.querySelectorAll('table')[1];
+        // Seleccionar las dos tablas del HTML
+        const contenedorPadre = document.querySelector('.container') || document.body;
+        const tablas = contenedorPadre.querySelectorAll('table');
+        
+        let htmlFinalTablas = '';
 
-        // 1. CLONAR TABLA 1 (INFORMACIÓN GENERAL)
-        let htmlTablaInfo = '';
-        if (tablaInfo && tablaInfo !== tablaSeguimiento) {
-            const clonInfo = tablaInfo.cloneNode(true);
-            clonInfo.setAttribute('border', '1');
-            clonInfo.style.borderCollapse = 'collapse';
-            clonInfo.style.marginBottom = '20px';
+        tablas.forEach((tablaOriginal, indexTabla) => {
+            const clon = tablaOriginal.cloneNode(true);
+            clon.setAttribute('border', '1');
+            clon.style.borderCollapse = 'collapse';
+            clon.style.marginBottom = '20px';
 
-            clonInfo.querySelectorAll('tr').forEach((tr, index) => {
-                const celdas = tr.querySelectorAll('th, td');
-                celdas.forEach(celda => {
+            clon.querySelectorAll('tr').forEach(fila => {
+                fila.querySelectorAll('th, td').forEach(celda => {
+                    // Forzar bordes
                     celda.setAttribute('border', '1');
                     celda.style.border = '1px solid #000000';
-                    celda.style.padding = '5px';
-                    if (index === 0) {
+                    celda.style.verticalAlign = 'middle';
+
+                    const texto = celda.innerText.trim();
+                    const textoUpper = texto.toUpperCase();
+                    const estilo = celda.getAttribute('style') || '';
+                    const clase = celda.className || '';
+
+                    // APLICA COLORES EXACTOS
+
+                    // 1. VERDE CLARO EN ENCABEZADOS DE INFORMACIÓN
+                    if (textoUpper.includes('INFORMACIÓN GENERAL') || textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
                         celda.setAttribute('bgcolor', '#D9EAD3');
                         celda.style.backgroundColor = '#D9EAD3';
                         celda.style.fontWeight = 'bold';
-                        celda.style.textAlign = 'center';
-                    } else {
-                        const esEtiqueta = celda === celdas[0];
-                        if (esEtiqueta) {
-                            celda.setAttribute('bgcolor', '#EFEFEF');
-                            celda.style.backgroundColor = '#EFEFEF';
-                            celda.style.fontWeight = 'bold';
-                            celda.setAttribute('width', '180');
-                        } else {
-                            celda.setAttribute('bgcolor', '#FFFFFF');
-                            celda.style.backgroundColor = '#FFFFFF';
-                            celda.setAttribute('width', '250');
-                        }
+                        celda.style.color = '#000000';
+                    }
+                    // 2. TEXTO ROJO EN SESIONES Y ACTIVIDADES Y ASISTENCIA GRUPAL
+                    else if (textoUpper.includes('SESIÓN') || textoUpper.includes('ESCRIBA EN LA CELDA') || textoUpper.includes('ASISTENCIA GRUPAL')) {
+                        celda.setAttribute('bgcolor', '#EFEFEF');
+                        celda.style.backgroundColor = '#EFEFEF';
+                        celda.style.color = '#FF0000'; // ROJO VIVO
+                        celda.style.fontWeight = 'bold';
+                    }
+                    // 3. CAMPO FECHA GRUPAL (TEXTO NEGRO, FONDO BLANCO/GRIS)
+                    else if (textoUpper.includes('FECHA GRUPAL')) {
+                        celda.setAttribute('bgcolor', '#EFEFEF');
+                        celda.style.backgroundColor = '#EFEFEF';
+                        celda.style.color = '#000000';
+                        celda.style.fontWeight = 'bold';
+                    }
+                    // 4. CAMPO SEXO ROJO EN CABECERA Y FONDO AMARILLO
+                    else if (textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') {
+                        celda.setAttribute('bgcolor', '#FFF2CC');
+                        celda.style.backgroundColor = '#FFF2CC';
+                        celda.style.color = '#FF0000'; // ROJO VIVO
+                        celda.style.fontWeight = 'bold';
+                    }
+                    // 5. CAMPO ROSA EN ENCABEZADOS Y EN COLUMNA INDIVIDUAL (TEXTO BLANCO)
+                    else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
+                        celda.setAttribute('bgcolor', '#FF26A8');
+                        celda.style.backgroundColor = '#FF26A8';
+                        celda.style.color = '#FFFFFF'; // BLANCO
+                        celda.style.fontWeight = 'bold';
+                    }
+                    // 6. AMARILLO DÍAS Y SEXO H/M
+                    else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
+                        celda.setAttribute('bgcolor', '#FFF2CC');
+                        celda.style.backgroundColor = '#FFF2CC';
+                        celda.style.color = '#000000';
+                    }
+                    // 7. GRIS DEL PRIMER PARCIAL
+                    else if (textoUpper.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
+                        celda.setAttribute('bgcolor', '#D9D9D9');
+                        celda.style.backgroundColor = '#D9D9D9';
+                        celda.style.fontWeight = 'bold';
+                        celda.style.color = '#000000';
+                    }
+                    // 8. ETIQUETAS DE TABLA 1 (Periodo, División, Tutor, etc.)
+                    else if (indexTabla === 0 && celda.tagName.toLowerCase() === 'th') {
+                        celda.setAttribute('bgcolor', '#EFEFEF');
+                        celda.style.backgroundColor = '#EFEFEF';
+                        celda.style.fontWeight = 'bold';
+                        celda.style.color = '#000000';
                     }
                 });
             });
-            htmlTablaInfo = clonInfo.outerHTML;
-        }
 
-        // 2. CLONAR TABLA 2 (SEGUIMIENTO DE ASISTENCIAS)
-        const clonSeguimiento = tablaSeguimiento.cloneNode(true);
-        clonSeguimiento.setAttribute('border', '1');
-        clonSeguimiento.style.borderCollapse = 'collapse';
-
-        const filas = clonSeguimiento.querySelectorAll('tr');
-        filas.forEach(fila => {
-            const celdas = fila.querySelectorAll('th, td');
-            celdas.forEach(celda => {
-                celda.setAttribute('border', '1');
-                celda.style.border = '1px solid #000000';
-                celda.style.verticalAlign = 'middle';
-
-                const texto = celda.innerText.trim().toUpperCase();
-                const clase = celda.className || '';
-                const estilo = celda.getAttribute('style') || '';
-
-                // VERDE CLARO (INFORMACIÓN ESTUDIANTIL)
-                if (texto.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
-                    celda.setAttribute('bgcolor', '#D9EAD3');
-                    celda.style.backgroundColor = '#D9EAD3';
-                    celda.style.fontWeight = 'bold';
-                }
-                // GRIS TITULO PRINCIPAL Y PARCIAL
-                else if (texto.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
-                    celda.setAttribute('bgcolor', '#D9D9D9');
-                    celda.style.backgroundColor = '#D9D9D9';
-                    celda.style.fontWeight = 'bold';
-                }
-                // GRIS SESIONES
-                else if (texto.includes('SESIÓN') || clase.includes('header-sesion')) {
-                    celda.setAttribute('bgcolor', '#EFEFEF');
-                    celda.style.backgroundColor = '#EFEFEF';
-                    celda.style.color = '#B40000';
-                    celda.style.fontWeight = 'bold';
-                }
-                // ROSA (ENCABEZADOS Y COLUMNAS INDIVIDUALES)
-                else if (texto.includes('FECHA INDIVIDUAL') || texto.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
-                    celda.setAttribute('bgcolor', '#FF26A8');
-                    celda.style.backgroundColor = '#FF26A8';
-                    celda.style.color = '#FFFFFF';
-                    celda.style.fontWeight = 'bold';
-                }
-                // AMARILLO DÍAS Y SEXO
-                else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc') || texto === 'SEXO' || texto === 'SEXO H/M') {
-                    celda.setAttribute('bgcolor', '#FFF2CC');
-                    celda.style.backgroundColor = '#FFF2CC';
-                    if (texto.includes('SEXO') || texto.includes('ASISTENCIA GRUPAL')) {
-                        celda.style.color = '#B40000';
-                        celda.style.fontWeight = 'bold';
+            // Ajuste de anchos para que no salga encimado en LibreOffice
+            if (indexTabla === 1) {
+                clon.querySelectorAll('tr').forEach(row => {
+                    const cols = row.querySelectorAll('th, td');
+                    if (cols.length >= 4) {
+                        if (cols[0]) cols[0].setAttribute('width', '35');
+                        if (cols[1]) cols[1].setAttribute('width', '90');
+                        if (cols[2]) cols[2].setAttribute('width', '220');
+                        if (cols[3]) cols[3].setAttribute('width', '50');
                     }
-                }
-                // BLANCO CELDAS DATOS ESTUDIANTE
-                else {
-                    if (!celda.hasAttribute('bgcolor')) {
-                        celda.setAttribute('bgcolor', '#FFFFFF');
-                        celda.style.backgroundColor = '#FFFFFF';
-                    }
-                }
-            });
-        });
-
-        // Dar anchos fijos a las primeras columnas para evitar flechitas rojas de texto cortado
-        const filasProcesadas = clonSeguimiento.querySelectorAll('tr');
-        filasProcesadas.forEach(row => {
-            const cols = row.querySelectorAll('th, td');
-            if (cols.length >= 4) {
-                if (cols[0]) cols[0].setAttribute('width', '40');
-                if (cols[1]) cols[1].setAttribute('width', '100');
-                if (cols[2]) cols[2].setAttribute('width', '220');
-                if (cols[3]) cols[3].setAttribute('width', '60');
+                });
             }
+
+            htmlFinalTablas += clon.outerHTML + '<br/>';
         });
 
-        // 3. DOCUMENTO EXCEL FINAL COMPATIBLE
+        // Estructura XML para Excel/LibreOffice
         const contenidoExcel = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" 
                   xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -271,9 +257,7 @@ if (btnExportar) {
                 </style>
             </head>
             <body>
-                ${htmlTablaInfo}
-                <br/>
-                ${clonSeguimiento.outerHTML}
+                ${htmlFinalTablas}
             </body>
             </html>
         `;
