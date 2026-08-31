@@ -35,13 +35,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cuerpoTabla = document.getElementById('cuerpoTabla');
         cuerpoTabla.innerHTML = '';
 
-        // Lunes 24 Agosto 2026 (Semana 1)
+        // Fecha de inicio: Lunes 24 Agosto 2026
         const FECHA_INICIO_PARCIAL = new Date(2026, 7, 24); 
 
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
             const genero = String(alumno.genero || '').trim().toUpperCase();
 
+            // Celdas base de datos del alumno
             tr.innerHTML = `
                 <td style="border: 1px solid #000; text-align: center;">${i + 1}</td>
                 <td style="border: 1px solid #000; text-align: center;">${alumno.matricula}</td>
@@ -85,29 +86,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // RENDERIZAR LAS 4 SESIONES CON ESTILOS DE COLOR DIRECTOS (INLINE)
+            // 3. RENDERIZAR LAS 4 SESIONES CON SUS CLASES Y ESTILOS DE COLOR EXPLÍCITOS
             for (let s = 1; s <= 4; s++) {
                 const asistioLunes = sesiones[s].lunes;
                 const asistioJueves = sesiones[s].jueves;
 
                 tr.innerHTML += `
-                    <!-- SUBCOLUMNAS DÍAS (AMARILLO PASTEL #FFF2CC) -->
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioJueves ? '1' : ''}</td>
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <!-- SUBCOLUMNAS DÍAS (L, M, X, J, V, S) -->
+                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioJueves ? '1' : ''}</td>
+                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
+                    <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     
                     <!-- SUBCOLUMNAS GÉNERO H / M -->
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'H' ? 'H' : ''}</td>
-                    <td style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'M' ? 'M' : ''}</td>
+                    <td class="col-h-m" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'H' ? 'H' : ''}</td>
+                    <td class="col-h-m" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'M' ? 'M' : ''}</td>
                     
-                    <!-- CASILLA ROSA (#FF26A8) -->
-                    <td style="background-color: #ff26a8; color: #ffffff; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioLunes ? '1' : ''}</td>
+                    <!-- CASILLA ROSA (ASISTENCIA INDIVIDUAL LUNES) -->
+                    <td class="bg-rosa-col" style="background-color: #ff26a8; color: #ffffff; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioLunes ? '1' : ''}</td>
                 `;
             }
 
+            // COLUMNAS FINALES
             tr.innerHTML += `
                 <td style="border: 1px solid #000; text-align: center;"><small>Seleccione</small></td>
                 <td style="border: 1px solid #000; text-align: center;"><small>Seleccione</small></td>
@@ -123,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-/// EVENTO FINAL DE EXPORTACIÓN (PINTA TODAS LAS FILAS DE LA TABLA EN EXCEL / LIBREOFFICE)
+// EVENTO DE EXPORTACIÓN (LE APLICA BGCOLOR Y STYLES A TODAS LAS CELDAS)
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
     const tabla = document.getElementById('tablaSeguimiento');
     if (!tabla) {
@@ -134,33 +136,30 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
     // 1. Clonar la tabla HTML completa
     const tablaClon = tabla.cloneNode(true);
 
-    // 2. PINTE OBLIGATORIO DE ENCABEZADOS
-    tablaClon.querySelectorAll('.header-parcial').forEach(el => el.setAttribute('bgcolor', '#D9D9D9'));
-    tablaClon.querySelectorAll('.header-sesion').forEach(el => el.setAttribute('bgcolor', '#EFEFEF'));
-    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => el.setAttribute('bgcolor', '#D9EAD3'));
-    tablaClon.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => el.setAttribute('bgcolor', '#EFEFEF'));
+    // 2. ENCABEZADOS DE LA TABLA
+    tablaClon.querySelectorAll('.header-parcial').forEach(el => { el.setAttribute('bgcolor', '#D9D9D9'); el.style.backgroundColor = '#D9D9D9'; });
+    tablaClon.querySelectorAll('.header-sesion').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
+    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => { el.setAttribute('bgcolor', '#D9EAD3'); el.style.backgroundColor = '#D9EAD3'; });
+    tablaClon.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
     tablaClon.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind').forEach(el => {
         el.setAttribute('bgcolor', '#FF26A8');
+        el.style.backgroundColor = '#FF26A8';
         el.style.color = '#FFFFFF';
     });
 
-    // 3. RECORRER TODAS LAS FILAS Y CELDAS DEL CUERPO (TBODY) PARA PINTAR CADA ALUMNO
+    // 3. FORCE DE COLOR EN TODAS LAS FILAS Y CELDAS DEL CUERPO (TBODY)
     const filas = tablaClon.querySelectorAll('tbody tr');
     filas.forEach(fila => {
         const celdas = fila.querySelectorAll('td');
         celdas.forEach(celda => {
-            // Pintar celdas amarillas (Días L, M, X, J, V, S y Sexo)
             if (celda.classList.contains('bg-amarillo-dia') || celda.classList.contains('col-h-m')) {
                 celda.setAttribute('bgcolor', '#FFF2CC');
                 celda.style.backgroundColor = '#FFF2CC';
-            }
-            // Pintar celdas rosas (Asistencia Individual Lunes)
-            else if (celda.classList.contains('bg-rosa-col')) {
+            } else if (celda.classList.contains('bg-rosa-col')) {
                 celda.setAttribute('bgcolor', '#FF26A8');
                 celda.style.backgroundColor = '#FF26A8';
                 celda.style.color = '#FFFFFF';
             }
-            // Bordes y alineación básica para todas las celdas de alumnos
             celda.setAttribute('border', '1');
             celda.style.border = '1px solid #000000';
             celda.style.textAlign = 'center';
@@ -168,7 +167,7 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
         });
     });
 
-    // 4. ESTRUCTURA COMPATIBLE CON LIBREOFFICE CALC Y EXCEL
+    // 4. ESTRUCTURA COMPATIBLE
     const contenidoExcel = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -192,7 +191,7 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
             <style>
                 table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; }
                 td, th { border: 1px solid #000000; text-align: center; vertical-align: middle; }
-                .bg-amarillo-dia { background-color: #FFF2CC !important; }
+                .bg-amarillo-dia, .col-h-m { background-color: #FFF2CC !important; }
                 .bg-rosa-col { background-color: #FF26A8 !important; color: #FFFFFF !important; }
             </style>
         </head>
@@ -202,7 +201,7 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
         </html>
     `;
 
-    // 5. Descarga automática en formato .xls
+    // 5. Descargar archivo .xls
     const blob = new Blob(['\ufeff', contenidoExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
