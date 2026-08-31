@@ -39,11 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!cuerpoTabla) return;
         cuerpoTabla.innerHTML = '';
 
-        // 3. RENDERIZAR FILAS CON ESTILOS Y ESTRUCTURA DE EXCEL CORREGIDA
+        // 3. RENDERIZAR FILAS CON ESTILOS Y ESTRUCTURA DE EXCEL
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
 
-            // Determinar marcas de Sexo (H/M)
             const generoLimpio = String(alumno.genero || '').trim().toUpperCase();
             const esH = generoLimpio === 'H' ? '1' : '';
             const esM = generoLimpio === 'M' ? '1' : '';
@@ -56,14 +55,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alumno.historial_asistencias.forEach(registro => {
                     const partes = registro.split(': ');
                     if (partes.length > 1) {
-                        const subpartes = partes[1].trim().split('-'); // ["30", "08", "2026", "11:46"]
+                        const subpartes = partes[1].trim().split('-');
                         if (subpartes.length >= 3) {
                             const dia = parseInt(subpartes[0], 10);
                             const mes = parseInt(subpartes[1], 10) - 1;
                             const anio = parseInt(subpartes[2], 10);
 
                             const fechaObjeto = new Date(anio, mes, dia);
-                            const diaSemana = fechaObjeto.getDay(); // 1 = Lunes, 4 = Jueves
+                            const diaSemana = fechaObjeto.getDay();
 
                             if (diaSemana === 4) asistioJueves = true;
                             if (diaSemana === 1) asistioLunes = true;
@@ -72,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // A) BLOQUE 1: DATOS FIJOS DEL ALUMNO (VERDE DE LA PLANTILLA)
+            // BLOQUE 1: DATOS FIJOS ALUMNO (VERDE)
             let htmlFila = `
                 <td class="bg-verde">${i + 1}</td>
                 <td class="bg-verde">${alumno.matricula}</td>
@@ -80,11 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="bg-verde">${generoLimpio}</td>
             `;
 
-            // B) BLOQUE 2: LAS 4 SESIONES DINÁMICAS (AMARILLO Y MAGENTA)
-            // Estructura por sesión:
-            // - Días: L, M, X, J, V, S (Fondo Amarillo)
-            // - Sexo: H, M (Fondo Amarillo)
-            // - Asistencia Individual (Fondo Rosa Magenta Completo)
+            // BLOQUE 2: LAS 4 SESIONES
             for (let s = 1; s <= 4; s++) {
                 if (s === 1) {
                     htmlFila += `
@@ -113,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // C) BLOQUE 3: COLUMNAS FINALES (OBSERVACIONES)
+            // BLOQUE 3: OBSERVACIONES
             htmlFila += `
                 <td><small>Seleccione</small></td>
                 <td><small>Seleccione</small></td>
