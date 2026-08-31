@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const tr = document.createElement('tr');
                 const genero = String(alumno.genero || '').trim().toUpperCase();
 
-                // Primeras 4 columnas base
                 tr.innerHTML = `
                     <td style="border: 1px solid #000; text-align: center; background-color: #ffffff;">${i + 1}</td>
                     <td style="border: 1px solid #000; text-align: center; background-color: #ffffff;">${alumno.matricula}</td>
@@ -90,7 +89,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
 
-                // Renderizado 4 sesiones
                 for (let s = 1; s <= 4; s++) {
                     const asistioLunes = sesiones[s].lunes;
                     const asistioJueves = sesiones[s].jueves;
@@ -126,88 +124,67 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR CON ALTURA DE FILAS Y ANCHOS DE COLUMNAS EXPANDIDOS
+// EXPORTADOR CON TABLA SEPARADA Y FORZADO DE COLUMNAS ANCHAS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
         const tablaInfo = document.querySelector('.tabla-info') || document.querySelectorAll('table')[0];
         const tablaSeguimiento = document.getElementById('tablaSeguimiento') || document.querySelectorAll('table')[1];
 
-       // 1. PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
-let htmlTablaInfo = '';
-if (tablaInfo && tablaInfo !== tablaSeguimiento) {
-    const clonInfo = tablaInfo.cloneNode(true);
-    clonInfo.setAttribute('border', '1');
-    clonInfo.setAttribute('cellspacing', '0');
-    clonInfo.setAttribute('cellpadding', '5');
+        // 1. PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
+        let htmlTablaInfo = '';
+        if (tablaInfo && tablaInfo !== tablaSeguimiento) {
+            const clonInfo = tablaInfo.cloneNode(true);
+            clonInfo.setAttribute('border', '1');
+            clonInfo.setAttribute('cellspacing', '0');
+            clonInfo.setAttribute('cellpadding', '5');
 
-    clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
-        tr.setAttribute('height', '28'); // Altura de fila adecuada
+            // Insertar colgroup obligatorio para forzar anchos en LibreOffice Calc
+            const colgroup = document.createElement('colgroup');
+            colgroup.innerHTML = '<col width="220"><col width="330">';
+            clonInfo.insertBefore(colgroup, clonInfo.firstChild);
 
-        const celdas = tr.querySelectorAll('th, td');
-        
-        // Fila 1: Encabezado "1. INFORMACIÓN GENERAL"
-        if (idx === 0) {
-            const celdaTitulo = celdas[0];
-            celdaTitulo.setAttribute('bgcolor', '#D9EAD3');
-            celdaTitulo.setAttribute('colspan', '2'); // Combina Columna A y B
-            celdaTitulo.setAttribute('width', '550'); // Ancho total extendido
-            celdaTitulo.innerHTML = `<b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>`;
-            
-            // Si existía una segunda celda sobrante en la fila 1 por el clon, se remueve
-            if (celdas.length > 1) {
-                celdas[1].remove();
-            }
-        } 
-        // Filas 2 a 8: Periodo, División, Persona Tutora, etc.
-        else {
-            if (celdas[0]) {
-                // Columna A: Etiquetas (Ampliadas para que no salga "Persona Tuto▶")
-                celdas[0].setAttribute('bgcolor', '#F3F3F3');
-                celdas[0].setAttribute('width', '220'); 
-                celdas[0].innerHTML = `<b><font color="#000000">${celdas[0].innerText.trim()}</font></b>`;
-            }
-            if (celdas[1]) {
-                // Columna B: Valores (Ampliadas para que quepan nombres largos)
-                celdas[1].setAttribute('bgcolor', '#FFFFFF');
-                celdas[1].setAttribute('width', '330');
-                celdas[1].innerHTML = `<font color="#000000">${celdas[1].innerText.trim()}</font>`;
-            }
+            clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
+                tr.setAttribute('height', '28');
+                const celdas = tr.querySelectorAll('th, td');
+                
+                if (idx === 0) {
+                    const celdaTitulo = celdas[0];
+                    celdaTitulo.setAttribute('bgcolor', '#D9EAD3');
+                    celdaTitulo.setAttribute('colspan', '2');
+                    celdaTitulo.setAttribute('width', '550');
+                    celdaTitulo.innerHTML = `<b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>`;
+                    if (celdas.length > 1) celdas[1].remove();
+                } else {
+                    if (celdas[0]) {
+                        celdas[0].setAttribute('bgcolor', '#F3F3F3');
+                        celdas[0].setAttribute('width', '220');
+                        celdas[0].innerHTML = `<b><font color="#000000">${celdas[0].innerText.trim()}</font></b>`;
+                    }
+                    if (celdas[1]) {
+                        celdas[1].setAttribute('bgcolor', '#FFFFFF');
+                        celdas[1].setAttribute('width', '330');
+                        celdas[1].innerHTML = `<font color="#000000">${celdas[1].innerText.trim()}</font>`;
+                    }
+                }
+            });
+            htmlTablaInfo = clonInfo.outerHTML;
         }
-    });
-    htmlTablaInfo = clonInfo.outerHTML;
-}
 
-        // 2. PROCESAR TABLA 2 (SEGUIMIENTO DE ASISTENCIA)
+        // 2. PROCESAR TABLA 2 (SEGUIMIENTO Y ASISTENCIA)
         const clonSeguimiento = tablaSeguimiento.cloneNode(true);
         clonSeguimiento.setAttribute('border', '1');
         clonSeguimiento.setAttribute('cellspacing', '0');
         clonSeguimiento.setAttribute('cellpadding', '4');
 
-        // ASIGNAR ALTURA A FILAS (Filas 14 a 26 y Encabezados)
+        // Modificar filas de la tabla 2
         const filas = clonSeguimiento.querySelectorAll('tr');
         filas.forEach((fila, idx) => {
-            // Si es de las filas del encabezado (1 a 6 de la tabla)
-            if (idx < 6) {
-                fila.setAttribute('height', '32'); // Mayor espacio vertical para textos grandes/rojos
-            } else {
-                // Filas de los alumnos (10 o más alumnos)
-                fila.setAttribute('height', '26'); // Expande las filas de los registros de 14 a 26px
-            }
+            if (idx < 6) fila.setAttribute('height', '32');
+            else fila.setAttribute('height', '26');
         });
 
-        // REESCALADO EXPANDIDO DE COLUMNAS (L, M, X, J, V, S, AE, AN, etc.)
-        filas.forEach(row => {
-            const cols = row.querySelectorAll('th, td');
-            if (cols.length >= 4) {
-                cols[0].setAttribute('width', '55');   // N°
-                cols[1].setAttribute('width', '150');  // MATRÍCULA (Suficiente para que no se apriete)
-                cols[2].setAttribute('width', '320');  // NOMBRE DEL ALUMNO (Ampliación completa)
-                cols[3].setAttribute('width', '80');   // SEXO H/M
-            }
-        });
-
-        // COLORES RED Y FORMATO COMPATIBLE NATIVO
+        // Aplicar etiquetas FONT rojas y colores de fondo
         filas.forEach(fila => {
             fila.querySelectorAll('th, td').forEach(celda => {
                 celda.setAttribute('border', '1');
@@ -218,7 +195,6 @@ if (tablaInfo && tablaInfo !== tablaSeguimiento) {
                 const estilo = celda.getAttribute('style') || '';
                 const clase = celda.className || '';
 
-                // A) TEXTO ROJO NATIVO (SESIÓN 1..4, ASISTENCIA GRUPAL, ESCRIBA EN LA CELDA..., SEXO)
                 if (
                     textoUpper.includes('SESIÓN') || 
                     textoUpper.includes('ESCRIBA EN LA CELDA') || 
@@ -226,50 +202,33 @@ if (tablaInfo && tablaInfo !== tablaSeguimiento) {
                     textoUpper === 'SEXO' || 
                     textoUpper === 'SEXO H/M'
                 ) {
-                    if (textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') {
-                        celda.setAttribute('bgcolor', '#FFF2CC');
-                    } else {
-                        celda.setAttribute('bgcolor', '#EFEFEF');
-                    }
+                    celda.setAttribute('bgcolor', (textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') ? '#FFF2CC' : '#EFEFEF');
                     celda.innerHTML = `<b><font color="#FF0000">${textoOriginal}</font></b>`;
                 }
-                // B) ENCABEZADO VERDE "INFORMACIÓN ESTUDIANTIL"
                 else if (textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
                     celda.setAttribute('bgcolor', '#D9EAD3');
                     celda.innerHTML = `<b><font color="#000000">${textoOriginal}</font></b>`;
                 }
-                // C) ENCABEZADO GRIS "PRIMER PARCIAL"
                 else if (textoUpper.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
                     celda.setAttribute('bgcolor', '#D9D9D9');
                     celda.innerHTML = `<b><font color="#000000">${textoOriginal}</font></b>`;
                 }
-                // D) ENCABEZADO Y COLUMNA ROSA
                 else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
                     celda.setAttribute('bgcolor', '#FF26A8');
-                    celda.setAttribute('width', '140'); // Ancho para la columna rosa
                     celda.innerHTML = `<b><font color="#FFFFFF">${textoOriginal}</font></b>`;
                 }
-                // E) FONDOS AMARILLOS (DÍAS L, M, X, J, V, S y H/M)
                 else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
                     celda.setAttribute('bgcolor', '#FFF2CC');
-                    celda.setAttribute('width', '40'); // Agranda las celdas L, M, X, J, V, S para que no salgan recortadas
-                    if (textoOriginal !== '') {
-                        celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
-                    }
+                    if (textoOriginal !== '') celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
                 }
-                // F) CELDAS BLANCAS DE DATOS
                 else {
-                    if (!celda.hasAttribute('bgcolor')) {
-                        celda.setAttribute('bgcolor', '#FFFFFF');
-                    }
-                    if (textoOriginal !== '') {
-                        celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
-                    }
+                    if (!celda.hasAttribute('bgcolor')) celda.setAttribute('bgcolor', '#FFFFFF');
+                    if (textoOriginal !== '') celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
                 }
             });
         });
 
-        // 3. GENERAR ARCHIVO XLS
+        // 3. ESTRUCTURA COMPATIBLE
         const contenidoExcel = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" 
                   xmlns:x="urn:schemas-microsoft-com:office:excel" 
