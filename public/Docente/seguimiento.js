@@ -126,46 +126,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR CON ANCHOS NATIVOS Y COLORES FORZADOS
+// FUNCIÓN EXPORTADORA CON ETIQUETAS FONT DE COLOR ROJO Y REESCALADO DE CELDAS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
         const tablaInfo = document.querySelector('.tabla-info') || document.querySelectorAll('table')[0];
         const tablaSeguimiento = document.getElementById('tablaSeguimiento') || document.querySelectorAll('table')[1];
 
-        // 1. CLONAR Y PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
+        // 1. PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
         let htmlTablaInfo = '';
         if (tablaInfo && tablaInfo !== tablaSeguimiento) {
             const clonInfo = tablaInfo.cloneNode(true);
             clonInfo.setAttribute('border', '1');
             clonInfo.setAttribute('cellspacing', '0');
-            clonInfo.setAttribute('cellpadding', '4');
-            clonInfo.style.borderCollapse = 'collapse';
+            clonInfo.setAttribute('cellpadding', '5');
 
-            clonInfo.querySelectorAll('tr').forEach((tr, index) => {
+            clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
                 const celdas = tr.querySelectorAll('th, td');
                 celdas.forEach(celda => {
                     celda.setAttribute('border', '1');
                     celda.style.border = '1px solid #000000';
-                    celda.style.fontSize = '11pt';
-                    celda.style.fontFamily = 'Arial, sans-serif';
-
-                    if (index === 0) {
+                    if (idx === 0) {
                         celda.setAttribute('bgcolor', '#D9EAD3');
-                        celda.style.backgroundColor = '#D9EAD3';
-                        celda.style.fontWeight = 'bold';
-                        celda.style.textAlign = 'center';
+                        celda.setAttribute('colspan', '2');
+                        celda.innerHTML = `<b><font color="#000000">${celda.innerText}</font></b>`;
                     } else {
-                        const esEtiqueta = celda === celdas[0];
-                        if (esEtiqueta) {
+                        if (celda === celdas[0]) {
                             celda.setAttribute('bgcolor', '#F3F3F3');
-                            celda.style.backgroundColor = '#F3F3F3';
-                            celda.style.fontWeight = 'bold';
-                            celda.setAttribute('width', '200');
+                            celda.setAttribute('width', '180');
+                            celda.innerHTML = `<b><font color="#000000">${celda.innerText}</font></b>`;
                         } else {
                             celda.setAttribute('bgcolor', '#FFFFFF');
-                            celda.style.backgroundColor = '#FFFFFF';
-                            celda.setAttribute('width', '300');
+                            celda.setAttribute('width', '250');
+                            celda.innerHTML = `<font color="#000000">${celda.innerText}</font>`;
                         }
                     }
                 });
@@ -173,96 +166,85 @@ if (btnExportar) {
             htmlTablaInfo = clonInfo.outerHTML;
         }
 
-        // 2. CLONAR Y PROCESAR TABLA 2 (SEGUIMIENTO DE ASISTENCIA)
+        // 2. PROCESAR TABLA 2 (SEGUIMIENTO Y ASISTENCIAS)
         const clonSeguimiento = tablaSeguimiento.cloneNode(true);
         clonSeguimiento.setAttribute('border', '1');
         clonSeguimiento.setAttribute('cellspacing', '0');
-        clonSeguimiento.setAttribute('cellpadding', '3');
-        clonSeguimiento.style.borderCollapse = 'collapse';
+        clonSeguimiento.setAttribute('cellpadding', '4');
 
-        // Definir anchos explícitos por columna para evitar flechas rojas y textos cortados
-        let htmlCols = `
-            <colgroup>
-                <col width="45">  <!-- N° -->
-                <col width="110"> <!-- MATRÍCULA -->
-                <col width="260"> <!-- NOMBRE DEL ALUMNO -->
-                <col width="60">  <!-- SEXO H/M -->
-        `;
-        // 4 Sesiones
-        for (let i = 0; i < 4; i++) {
-            htmlCols += `
-                <col width="30"><col width="30"><col width="30"><col width="30"><col width="30"><col width="30"> <!-- L M X J V S -->
-                <col width="35"><col width="35"> <!-- H M -->
-                <col width="140"> <!-- FECHA/ASISTENCIA INDIVIDUAL ROSA -->
-            `;
-        }
-        htmlCols += `
-                <col width="100"><col width="100"><col width="100">
-            </colgroup>
-        `;
+        // REESCALADO DE CELDAS: Asignar anchos amplios celda a celda en las primeras 4 columnas
+        clonSeguimiento.querySelectorAll('tr').forEach(row => {
+            const cols = row.querySelectorAll('th, td');
+            if (cols.length >= 4) {
+                cols[0].setAttribute('width', '50');   // N°
+                cols[1].setAttribute('width', '130');  // MATRÍCULA
+                cols[2].setAttribute('width', '280');  // NOMBRE DEL ALUMNO
+                cols[3].setAttribute('width', '70');   // SEXO H/M
+            }
+        });
 
-        clonSeguimiento.insertAdjacentHTML('afterbegin', htmlCols);
-
-        // Procesar estilos celda por celda
+        // ENVOLVER TEXTOS CON ETIQUETAS FONT COLOR
         clonSeguimiento.querySelectorAll('tr').forEach(fila => {
             fila.querySelectorAll('th, td').forEach(celda => {
                 celda.setAttribute('border', '1');
                 celda.style.border = '1px solid #000000';
-                celda.style.verticalAlign = 'middle';
-                celda.style.fontSize = '9pt';
-                celda.style.fontFamily = 'Arial, sans-serif';
-
-                const texto = celda.innerText.trim();
-                const textoUpper = texto.toUpperCase();
+                
+                const textoOriginal = celda.innerText.trim();
+                const textoUpper = textoOriginal.toUpperCase();
                 const estilo = celda.getAttribute('style') || '';
                 const clase = celda.className || '';
 
-                // A) ENCABEZADO VERDE
-                if (textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
-                    celda.setAttribute('bgcolor', '#D9EAD3');
-                    celda.style.backgroundColor = '#D9EAD3';
-                    celda.style.fontWeight = 'bold';
-                    celda.style.color = '#000000';
+                // A) APLICAR TEXTO ROJO NATIVO PARA LIBREOFFICE
+                if (
+                    textoUpper.includes('SESIÓN') || 
+                    textoUpper.includes('ESCRIBA EN LA CELDA') || 
+                    textoUpper.includes('ASISTENCIA GRUPAL') || 
+                    textoUpper === 'SEXO' || 
+                    textoUpper === 'SEXO H/M'
+                ) {
+                    if (textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') {
+                        celda.setAttribute('bgcolor', '#FFF2CC');
+                    } else {
+                        celda.setAttribute('bgcolor', '#EFEFEF');
+                    }
+                    // Forzar etiqueta HTML nativa para que LibreOffice la lea roja obligatoriamente
+                    celda.innerHTML = `<b><font color="#FF0000">${textoOriginal}</font></b>`;
                 }
-                // B) ENCABEZADO GRIS PRIMER PARCIAL
+                // B) ENCABEZADO VERDE "INFORMACIÓN ESTUDIANTIL"
+                else if (textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
+                    celda.setAttribute('bgcolor', '#D9EAD3');
+                    celda.innerHTML = `<b><font color="#000000">${textoOriginal}</font></b>`;
+                }
+                // C) ENCABEZADO GRIS "PRIMER PARCIAL"
                 else if (textoUpper.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
                     celda.setAttribute('bgcolor', '#D9D9D9');
-                    celda.style.backgroundColor = '#D9D9D9';
-                    celda.style.fontWeight = 'bold';
-                    celda.style.fontSize = '12pt';
-                    celda.style.color = '#000000';
+                    celda.innerHTML = `<b><font color="#000000">${textoOriginal}</font></b>`;
                 }
-                // C) TEXTOS ROJOS (SESIONES, ACTIVIDADES, ASISTENCIA GRUPAL, SEXO H/M)
-                else if (textoUpper.includes('SESIÓN') || textoUpper.includes('ESCRIBA EN LA CELDA') || textoUpper.includes('ASISTENCIA GRUPAL') || textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') {
-                    celda.setAttribute('bgcolor', textoUpper === 'SEXO' ? '#FFF2CC' : '#EFEFEF');
-                    celda.style.backgroundColor = textoUpper === 'SEXO' ? '#FFF2CC' : '#EFEFEF';
-                    celda.style.color = '#CC0000'; // ROJO VIVO EN EXCEL
-                    celda.style.fontWeight = 'bold';
-                }
-                // D) CAMPO ROSA (FECHA/ASISTENCIA INDIVIDUAL Y COLUMNA DE DATOS ROSA)
+                // D) ENCABEZADO Y COLUMNA ROSA
                 else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
                     celda.setAttribute('bgcolor', '#FF26A8');
-                    celda.style.backgroundColor = '#FF26A8';
-                    celda.style.color = '#FFFFFF';
-                    celda.style.fontWeight = 'bold';
+                    celda.innerHTML = `<b><font color="#FFFFFF">${textoOriginal}</font></b>`;
                 }
-                // E) AMARILLO DÍAS L M X J V S Y COLUMNA SEXO H M
+                // E) FONDOS AMARILLOS (DÍAS Y H/M)
                 else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
                     celda.setAttribute('bgcolor', '#FFF2CC');
-                    celda.style.backgroundColor = '#FFF2CC';
-                    celda.style.color = '#000000';
+                    if (textoOriginal !== '') {
+                        celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
+                    }
                 }
-                // F) CELDAS DE DATOS BLANCAS (MATRICULA, NOMBRE, N°)
+                // F) CELDAS BLANCAS DE DATOS
                 else {
                     if (!celda.hasAttribute('bgcolor')) {
                         celda.setAttribute('bgcolor', '#FFFFFF');
-                        celda.style.backgroundColor = '#FFFFFF';
+                    }
+                    if (textoOriginal !== '') {
+                        celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
                     }
                 }
             });
         });
 
-        // 3. GENERAR EL ENCABEZADO Y XML NATIVO DE EXCEL
+        // 3. GENERAR EL ARCHIVO XLS INYECTANDO HTML DIRECTO
         const contenidoExcel = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" 
                   xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -283,10 +265,6 @@ if (btnExportar) {
                     </x:ExcelWorkbook>
                 </xml>
                 <![endif]-->
-                <style>
-                    table { border-collapse: collapse; table-layout: fixed; }
-                    td, th { border: 1px solid #000000 !important; text-align: center; vertical-align: middle; }
-                </style>
             </head>
             <body>
                 ${htmlTablaInfo}
