@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// FUNCIÓN EXPORTADORA CON ETIQUETAS FONT DE COLOR ROJO Y REESCALADO DE CELDAS
+// EXPORTADOR CON ALTURA DE FILAS Y ANCHOS DE COLUMNAS EXPANDIDOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
@@ -142,6 +142,7 @@ if (btnExportar) {
             clonInfo.setAttribute('cellpadding', '5');
 
             clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
+                tr.setAttribute('height', '28'); // Altura fija cómoda
                 const celdas = tr.querySelectorAll('th, td');
                 celdas.forEach(celda => {
                     celda.setAttribute('border', '1');
@@ -153,11 +154,11 @@ if (btnExportar) {
                     } else {
                         if (celda === celdas[0]) {
                             celda.setAttribute('bgcolor', '#F3F3F3');
-                            celda.setAttribute('width', '180');
+                            celda.setAttribute('width', '220');
                             celda.innerHTML = `<b><font color="#000000">${celda.innerText}</font></b>`;
                         } else {
                             celda.setAttribute('bgcolor', '#FFFFFF');
-                            celda.setAttribute('width', '250');
+                            celda.setAttribute('width', '320');
                             celda.innerHTML = `<font color="#000000">${celda.innerText}</font>`;
                         }
                     }
@@ -166,25 +167,37 @@ if (btnExportar) {
             htmlTablaInfo = clonInfo.outerHTML;
         }
 
-        // 2. PROCESAR TABLA 2 (SEGUIMIENTO Y ASISTENCIAS)
+        // 2. PROCESAR TABLA 2 (SEGUIMIENTO DE ASISTENCIA)
         const clonSeguimiento = tablaSeguimiento.cloneNode(true);
         clonSeguimiento.setAttribute('border', '1');
         clonSeguimiento.setAttribute('cellspacing', '0');
         clonSeguimiento.setAttribute('cellpadding', '4');
 
-        // REESCALADO DE CELDAS: Asignar anchos amplios celda a celda en las primeras 4 columnas
-        clonSeguimiento.querySelectorAll('tr').forEach(row => {
-            const cols = row.querySelectorAll('th, td');
-            if (cols.length >= 4) {
-                cols[0].setAttribute('width', '50');   // N°
-                cols[1].setAttribute('width', '130');  // MATRÍCULA
-                cols[2].setAttribute('width', '280');  // NOMBRE DEL ALUMNO
-                cols[3].setAttribute('width', '70');   // SEXO H/M
+        // ASIGNAR ALTURA A FILAS (Filas 14 a 26 y Encabezados)
+        const filas = clonSeguimiento.querySelectorAll('tr');
+        filas.forEach((fila, idx) => {
+            // Si es de las filas del encabezado (1 a 6 de la tabla)
+            if (idx < 6) {
+                fila.setAttribute('height', '32'); // Mayor espacio vertical para textos grandes/rojos
+            } else {
+                // Filas de los alumnos (10 o más alumnos)
+                fila.setAttribute('height', '26'); // Expande las filas de los registros de 14 a 26px
             }
         });
 
-        // ENVOLVER TEXTOS CON ETIQUETAS FONT COLOR
-        clonSeguimiento.querySelectorAll('tr').forEach(fila => {
+        // REESCALADO EXPANDIDO DE COLUMNAS (L, M, X, J, V, S, AE, AN, etc.)
+        filas.forEach(row => {
+            const cols = row.querySelectorAll('th, td');
+            if (cols.length >= 4) {
+                cols[0].setAttribute('width', '55');   // N°
+                cols[1].setAttribute('width', '150');  // MATRÍCULA (Suficiente para que no se apriete)
+                cols[2].setAttribute('width', '320');  // NOMBRE DEL ALUMNO (Ampliación completa)
+                cols[3].setAttribute('width', '80');   // SEXO H/M
+            }
+        });
+
+        // COLORES RED Y FORMATO COMPATIBLE NATIVO
+        filas.forEach(fila => {
             fila.querySelectorAll('th, td').forEach(celda => {
                 celda.setAttribute('border', '1');
                 celda.style.border = '1px solid #000000';
@@ -194,7 +207,7 @@ if (btnExportar) {
                 const estilo = celda.getAttribute('style') || '';
                 const clase = celda.className || '';
 
-                // A) APLICAR TEXTO ROJO NATIVO PARA LIBREOFFICE
+                // A) TEXTO ROJO NATIVO (SESIÓN 1..4, ASISTENCIA GRUPAL, ESCRIBA EN LA CELDA..., SEXO)
                 if (
                     textoUpper.includes('SESIÓN') || 
                     textoUpper.includes('ESCRIBA EN LA CELDA') || 
@@ -207,7 +220,6 @@ if (btnExportar) {
                     } else {
                         celda.setAttribute('bgcolor', '#EFEFEF');
                     }
-                    // Forzar etiqueta HTML nativa para que LibreOffice la lea roja obligatoriamente
                     celda.innerHTML = `<b><font color="#FF0000">${textoOriginal}</font></b>`;
                 }
                 // B) ENCABEZADO VERDE "INFORMACIÓN ESTUDIANTIL"
@@ -223,11 +235,13 @@ if (btnExportar) {
                 // D) ENCABEZADO Y COLUMNA ROSA
                 else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
                     celda.setAttribute('bgcolor', '#FF26A8');
+                    celda.setAttribute('width', '140'); // Ancho para la columna rosa
                     celda.innerHTML = `<b><font color="#FFFFFF">${textoOriginal}</font></b>`;
                 }
-                // E) FONDOS AMARILLOS (DÍAS Y H/M)
+                // E) FONDOS AMARILLOS (DÍAS L, M, X, J, V, S y H/M)
                 else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
                     celda.setAttribute('bgcolor', '#FFF2CC');
+                    celda.setAttribute('width', '40'); // Agranda las celdas L, M, X, J, V, S para que no salgan recortadas
                     if (textoOriginal !== '') {
                         celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
                     }
@@ -244,7 +258,7 @@ if (btnExportar) {
             });
         });
 
-        // 3. GENERAR EL ARCHIVO XLS INYECTANDO HTML DIRECTO
+        // 3. GENERAR ARCHIVO XLS
         const contenidoExcel = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" 
                   xmlns:x="urn:schemas-microsoft-com:office:excel" 
