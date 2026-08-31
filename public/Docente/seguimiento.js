@@ -141,31 +141,37 @@ if (btnExportar) {
             clonInfo.setAttribute('style', 'border-collapse: collapse;');
 
             const filas = Array.from(clonInfo.querySelectorAll('tr'));
+            const totalFilas = filas.length;
 
             filas.forEach((tr, idx) => {
                 tr.setAttribute('height', '28');
                 const celdas = Array.from(tr.querySelectorAll('th, td'));
                 
                 if (idx === 0) {
-                    // Fila 1: Título verde "1. INFORMACIÓN GENERAL" (Abarca hasta Columna E -> A, B, C, D, E)
+                    // Fila 1: Título verde con borde completo a todo lo ancho de la tabla
                     tr.innerHTML = `
-                        <td colspan="5" bgcolor="#D9EAD3" style="border: 1px solid #000000; text-align: left; padding-left: 8px;">
+                        <td colspan="4" bgcolor="#D9EAD3" style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; text-align: left; padding-left: 8px;">
                             <b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>
                         </td>
+                        <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
                     `;
                 } else {
                     const textoEtiqueta = celdas[0] ? celdas[0].innerText.trim() : '';
                     const textoValor = celdas[1] ? celdas[1].innerText.trim() : '';
 
-                    // Filas de datos (2 a 8):
-                    // - Columna A-B (colspan=2): Etiquetas en negrita
-                    // - Columna C-D (colspan=2): Valores extendidos (ej. Nombre del tutor)
-                    // - Columna E: Celda fantasma totalmente transparente sin bordes
+                    // Es la última fila de datos (Mujeres: 7)
+                    const esUltimaFila = (idx === totalFilas - 1);
+                    const bordeInferior = esUltimaFila ? 'border-bottom: 1px solid #000000;' : '';
+
+                    // Estructura:
+                    // - Columna A-B (Etiquetas): Borde exterior izquierdo, borde divisor derecho.
+                    // - Columna C-D (Valores): Borde divisor izquierdo, borde exterior derecho.
+                    // - Columna E: Celda fantasma totalmente limpia y sin bordes.
                     tr.innerHTML = `
-                        <td colspan="2" bgcolor="#F3F3F3" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
+                        <td colspan="2" bgcolor="#F3F3F3" style="border-left: 1px solid #000000; border-right: 1px solid #000000; ${bordeInferior} text-align: left; padding-left: 5px;">
                             <b><font color="#000000">${textoEtiqueta}</font></b>
                         </td>
-                        <td colspan="2" bgcolor="#FFFFFF" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
+                        <td colspan="2" bgcolor="#FFFFFF" style="border-left: 1px solid #000000; border-right: 1px solid #000000; ${bordeInferior} text-align: left; padding-left: 5px;">
                             <font color="#000000">${textoValor}</font>
                         </td>
                         <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
