@@ -133,39 +133,50 @@ if (btnExportar) {
         const tablaInfo = document.querySelector('.tabla-info') || document.querySelectorAll('table')[0];
         const tablaSeguimiento = document.getElementById('tablaSeguimiento') || document.querySelectorAll('table')[1];
 
-        // 1. PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
-        let htmlTablaInfo = '';
-        if (tablaInfo && tablaInfo !== tablaSeguimiento) {
-            const clonInfo = tablaInfo.cloneNode(true);
-            clonInfo.setAttribute('border', '1');
-            clonInfo.setAttribute('cellspacing', '0');
-            clonInfo.setAttribute('cellpadding', '5');
+       // 1. PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
+let htmlTablaInfo = '';
+if (tablaInfo && tablaInfo !== tablaSeguimiento) {
+    const clonInfo = tablaInfo.cloneNode(true);
+    clonInfo.setAttribute('border', '1');
+    clonInfo.setAttribute('cellspacing', '0');
+    clonInfo.setAttribute('cellpadding', '5');
 
-            clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
-                tr.setAttribute('height', '28'); // Altura fija cómoda
-                const celdas = tr.querySelectorAll('th, td');
-                celdas.forEach(celda => {
-                    celda.setAttribute('border', '1');
-                    celda.style.border = '1px solid #000000';
-                    if (idx === 0) {
-                        celda.setAttribute('bgcolor', '#D9EAD3');
-                        celda.setAttribute('colspan', '2');
-                        celda.innerHTML = `<b><font color="#000000">${celda.innerText}</font></b>`;
-                    } else {
-                        if (celda === celdas[0]) {
-                            celda.setAttribute('bgcolor', '#F3F3F3');
-                            celda.setAttribute('width', '220');
-                            celda.innerHTML = `<b><font color="#000000">${celda.innerText}</font></b>`;
-                        } else {
-                            celda.setAttribute('bgcolor', '#FFFFFF');
-                            celda.setAttribute('width', '320');
-                            celda.innerHTML = `<font color="#000000">${celda.innerText}</font>`;
-                        }
-                    }
-                });
-            });
-            htmlTablaInfo = clonInfo.outerHTML;
+    clonInfo.querySelectorAll('tr').forEach((tr, idx) => {
+        tr.setAttribute('height', '28'); // Altura de fila adecuada
+
+        const celdas = tr.querySelectorAll('th, td');
+        
+        // Fila 1: Encabezado "1. INFORMACIÓN GENERAL"
+        if (idx === 0) {
+            const celdaTitulo = celdas[0];
+            celdaTitulo.setAttribute('bgcolor', '#D9EAD3');
+            celdaTitulo.setAttribute('colspan', '2'); // Combina Columna A y B
+            celdaTitulo.setAttribute('width', '550'); // Ancho total extendido
+            celdaTitulo.innerHTML = `<b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>`;
+            
+            // Si existía una segunda celda sobrante en la fila 1 por el clon, se remueve
+            if (celdas.length > 1) {
+                celdas[1].remove();
+            }
+        } 
+        // Filas 2 a 8: Periodo, División, Persona Tutora, etc.
+        else {
+            if (celdas[0]) {
+                // Columna A: Etiquetas (Ampliadas para que no salga "Persona Tuto▶")
+                celdas[0].setAttribute('bgcolor', '#F3F3F3');
+                celdas[0].setAttribute('width', '220'); 
+                celdas[0].innerHTML = `<b><font color="#000000">${celdas[0].innerText.trim()}</font></b>`;
+            }
+            if (celdas[1]) {
+                // Columna B: Valores (Ampliadas para que quepan nombres largos)
+                celdas[1].setAttribute('bgcolor', '#FFFFFF');
+                celdas[1].setAttribute('width', '330');
+                celdas[1].innerHTML = `<font color="#000000">${celdas[1].innerText.trim()}</font>`;
+            }
         }
+    });
+    htmlTablaInfo = clonInfo.outerHTML;
+}
 
         // 2. PROCESAR TABLA 2 (SEGUIMIENTO DE ASISTENCIA)
         const clonSeguimiento = tablaSeguimiento.cloneNode(true);
