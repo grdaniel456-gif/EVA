@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
 
-                // Renderizado de las 4 sesiones
+                // Renderizado 4 sesiones
                 for (let s = 1; s <= 4; s++) {
                     const asistioLunes = sesiones[s].lunes;
                     const asistioJueves = sesiones[s].jueves;
@@ -126,111 +126,143 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// FUNCIÓN DE EXPORTACIÓN EXACTA CON COLORES ROJOS Y VERDES NATIVOS
+// EXPORTADOR CON ANCHOS NATIVOS Y COLORES FORZADOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
-        // Seleccionar las dos tablas del HTML
-        const contenedorPadre = document.querySelector('.container') || document.body;
-        const tablas = contenedorPadre.querySelectorAll('table');
-        
-        let htmlFinalTablas = '';
+        const tablaInfo = document.querySelector('.tabla-info') || document.querySelectorAll('table')[0];
+        const tablaSeguimiento = document.getElementById('tablaSeguimiento') || document.querySelectorAll('table')[1];
 
-        tablas.forEach((tablaOriginal, indexTabla) => {
-            const clon = tablaOriginal.cloneNode(true);
-            clon.setAttribute('border', '1');
-            clon.style.borderCollapse = 'collapse';
-            clon.style.marginBottom = '20px';
+        // 1. CLONAR Y PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
+        let htmlTablaInfo = '';
+        if (tablaInfo && tablaInfo !== tablaSeguimiento) {
+            const clonInfo = tablaInfo.cloneNode(true);
+            clonInfo.setAttribute('border', '1');
+            clonInfo.setAttribute('cellspacing', '0');
+            clonInfo.setAttribute('cellpadding', '4');
+            clonInfo.style.borderCollapse = 'collapse';
 
-            clon.querySelectorAll('tr').forEach(fila => {
-                fila.querySelectorAll('th, td').forEach(celda => {
-                    // Forzar bordes
+            clonInfo.querySelectorAll('tr').forEach((tr, index) => {
+                const celdas = tr.querySelectorAll('th, td');
+                celdas.forEach(celda => {
                     celda.setAttribute('border', '1');
                     celda.style.border = '1px solid #000000';
-                    celda.style.verticalAlign = 'middle';
+                    celda.style.fontSize = '11pt';
+                    celda.style.fontFamily = 'Arial, sans-serif';
 
-                    const texto = celda.innerText.trim();
-                    const textoUpper = texto.toUpperCase();
-                    const estilo = celda.getAttribute('style') || '';
-                    const clase = celda.className || '';
-
-                    // APLICA COLORES EXACTOS
-
-                    // 1. VERDE CLARO EN ENCABEZADOS DE INFORMACIÓN
-                    if (textoUpper.includes('INFORMACIÓN GENERAL') || textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
+                    if (index === 0) {
                         celda.setAttribute('bgcolor', '#D9EAD3');
                         celda.style.backgroundColor = '#D9EAD3';
                         celda.style.fontWeight = 'bold';
-                        celda.style.color = '#000000';
-                    }
-                    // 2. TEXTO ROJO EN SESIONES Y ACTIVIDADES Y ASISTENCIA GRUPAL
-                    else if (textoUpper.includes('SESIÓN') || textoUpper.includes('ESCRIBA EN LA CELDA') || textoUpper.includes('ASISTENCIA GRUPAL')) {
-                        celda.setAttribute('bgcolor', '#EFEFEF');
-                        celda.style.backgroundColor = '#EFEFEF';
-                        celda.style.color = '#FF0000'; // ROJO VIVO
-                        celda.style.fontWeight = 'bold';
-                    }
-                    // 3. CAMPO FECHA GRUPAL (TEXTO NEGRO, FONDO BLANCO/GRIS)
-                    else if (textoUpper.includes('FECHA GRUPAL')) {
-                        celda.setAttribute('bgcolor', '#EFEFEF');
-                        celda.style.backgroundColor = '#EFEFEF';
-                        celda.style.color = '#000000';
-                        celda.style.fontWeight = 'bold';
-                    }
-                    // 4. CAMPO SEXO ROJO EN CABECERA Y FONDO AMARILLO
-                    else if (textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') {
-                        celda.setAttribute('bgcolor', '#FFF2CC');
-                        celda.style.backgroundColor = '#FFF2CC';
-                        celda.style.color = '#FF0000'; // ROJO VIVO
-                        celda.style.fontWeight = 'bold';
-                    }
-                    // 5. CAMPO ROSA EN ENCABEZADOS Y EN COLUMNA INDIVIDUAL (TEXTO BLANCO)
-                    else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
-                        celda.setAttribute('bgcolor', '#FF26A8');
-                        celda.style.backgroundColor = '#FF26A8';
-                        celda.style.color = '#FFFFFF'; // BLANCO
-                        celda.style.fontWeight = 'bold';
-                    }
-                    // 6. AMARILLO DÍAS Y SEXO H/M
-                    else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
-                        celda.setAttribute('bgcolor', '#FFF2CC');
-                        celda.style.backgroundColor = '#FFF2CC';
-                        celda.style.color = '#000000';
-                    }
-                    // 7. GRIS DEL PRIMER PARCIAL
-                    else if (textoUpper.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
-                        celda.setAttribute('bgcolor', '#D9D9D9');
-                        celda.style.backgroundColor = '#D9D9D9';
-                        celda.style.fontWeight = 'bold';
-                        celda.style.color = '#000000';
-                    }
-                    // 8. ETIQUETAS DE TABLA 1 (Periodo, División, Tutor, etc.)
-                    else if (indexTabla === 0 && celda.tagName.toLowerCase() === 'th') {
-                        celda.setAttribute('bgcolor', '#EFEFEF');
-                        celda.style.backgroundColor = '#EFEFEF';
-                        celda.style.fontWeight = 'bold';
-                        celda.style.color = '#000000';
+                        celda.style.textAlign = 'center';
+                    } else {
+                        const esEtiqueta = celda === celdas[0];
+                        if (esEtiqueta) {
+                            celda.setAttribute('bgcolor', '#F3F3F3');
+                            celda.style.backgroundColor = '#F3F3F3';
+                            celda.style.fontWeight = 'bold';
+                            celda.setAttribute('width', '200');
+                        } else {
+                            celda.setAttribute('bgcolor', '#FFFFFF');
+                            celda.style.backgroundColor = '#FFFFFF';
+                            celda.setAttribute('width', '300');
+                        }
                     }
                 });
             });
+            htmlTablaInfo = clonInfo.outerHTML;
+        }
 
-            // Ajuste de anchos para que no salga encimado en LibreOffice
-            if (indexTabla === 1) {
-                clon.querySelectorAll('tr').forEach(row => {
-                    const cols = row.querySelectorAll('th, td');
-                    if (cols.length >= 4) {
-                        if (cols[0]) cols[0].setAttribute('width', '35');
-                        if (cols[1]) cols[1].setAttribute('width', '90');
-                        if (cols[2]) cols[2].setAttribute('width', '220');
-                        if (cols[3]) cols[3].setAttribute('width', '50');
+        // 2. CLONAR Y PROCESAR TABLA 2 (SEGUIMIENTO DE ASISTENCIA)
+        const clonSeguimiento = tablaSeguimiento.cloneNode(true);
+        clonSeguimiento.setAttribute('border', '1');
+        clonSeguimiento.setAttribute('cellspacing', '0');
+        clonSeguimiento.setAttribute('cellpadding', '3');
+        clonSeguimiento.style.borderCollapse = 'collapse';
+
+        // Definir anchos explícitos por columna para evitar flechas rojas y textos cortados
+        let htmlCols = `
+            <colgroup>
+                <col width="45">  <!-- N° -->
+                <col width="110"> <!-- MATRÍCULA -->
+                <col width="260"> <!-- NOMBRE DEL ALUMNO -->
+                <col width="60">  <!-- SEXO H/M -->
+        `;
+        // 4 Sesiones
+        for (let i = 0; i < 4; i++) {
+            htmlCols += `
+                <col width="30"><col width="30"><col width="30"><col width="30"><col width="30"><col width="30"> <!-- L M X J V S -->
+                <col width="35"><col width="35"> <!-- H M -->
+                <col width="140"> <!-- FECHA/ASISTENCIA INDIVIDUAL ROSA -->
+            `;
+        }
+        htmlCols += `
+                <col width="100"><col width="100"><col width="100">
+            </colgroup>
+        `;
+
+        clonSeguimiento.insertAdjacentHTML('afterbegin', htmlCols);
+
+        // Procesar estilos celda por celda
+        clonSeguimiento.querySelectorAll('tr').forEach(fila => {
+            fila.querySelectorAll('th, td').forEach(celda => {
+                celda.setAttribute('border', '1');
+                celda.style.border = '1px solid #000000';
+                celda.style.verticalAlign = 'middle';
+                celda.style.fontSize = '9pt';
+                celda.style.fontFamily = 'Arial, sans-serif';
+
+                const texto = celda.innerText.trim();
+                const textoUpper = texto.toUpperCase();
+                const estilo = celda.getAttribute('style') || '';
+                const clase = celda.className || '';
+
+                // A) ENCABEZADO VERDE
+                if (textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
+                    celda.setAttribute('bgcolor', '#D9EAD3');
+                    celda.style.backgroundColor = '#D9EAD3';
+                    celda.style.fontWeight = 'bold';
+                    celda.style.color = '#000000';
+                }
+                // B) ENCABEZADO GRIS PRIMER PARCIAL
+                else if (textoUpper.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
+                    celda.setAttribute('bgcolor', '#D9D9D9');
+                    celda.style.backgroundColor = '#D9D9D9';
+                    celda.style.fontWeight = 'bold';
+                    celda.style.fontSize = '12pt';
+                    celda.style.color = '#000000';
+                }
+                // C) TEXTOS ROJOS (SESIONES, ACTIVIDADES, ASISTENCIA GRUPAL, SEXO H/M)
+                else if (textoUpper.includes('SESIÓN') || textoUpper.includes('ESCRIBA EN LA CELDA') || textoUpper.includes('ASISTENCIA GRUPAL') || textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') {
+                    celda.setAttribute('bgcolor', textoUpper === 'SEXO' ? '#FFF2CC' : '#EFEFEF');
+                    celda.style.backgroundColor = textoUpper === 'SEXO' ? '#FFF2CC' : '#EFEFEF';
+                    celda.style.color = '#CC0000'; // ROJO VIVO EN EXCEL
+                    celda.style.fontWeight = 'bold';
+                }
+                // D) CAMPO ROSA (FECHA/ASISTENCIA INDIVIDUAL Y COLUMNA DE DATOS ROSA)
+                else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
+                    celda.setAttribute('bgcolor', '#FF26A8');
+                    celda.style.backgroundColor = '#FF26A8';
+                    celda.style.color = '#FFFFFF';
+                    celda.style.fontWeight = 'bold';
+                }
+                // E) AMARILLO DÍAS L M X J V S Y COLUMNA SEXO H M
+                else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
+                    celda.setAttribute('bgcolor', '#FFF2CC');
+                    celda.style.backgroundColor = '#FFF2CC';
+                    celda.style.color = '#000000';
+                }
+                // F) CELDAS DE DATOS BLANCAS (MATRICULA, NOMBRE, N°)
+                else {
+                    if (!celda.hasAttribute('bgcolor')) {
+                        celda.setAttribute('bgcolor', '#FFFFFF');
+                        celda.style.backgroundColor = '#FFFFFF';
                     }
-                });
-            }
-
-            htmlFinalTablas += clon.outerHTML + '<br/>';
+                }
+            });
         });
 
-        // Estructura XML para Excel/LibreOffice
+        // 3. GENERAR EL ENCABEZADO Y XML NATIVO DE EXCEL
         const contenidoExcel = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" 
                   xmlns:x="urn:schemas-microsoft-com:office:excel" 
@@ -252,12 +284,14 @@ if (btnExportar) {
                 </xml>
                 <![endif]-->
                 <style>
-                    table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 10pt; }
+                    table { border-collapse: collapse; table-layout: fixed; }
                     td, th { border: 1px solid #000000 !important; text-align: center; vertical-align: middle; }
                 </style>
             </head>
             <body>
-                ${htmlFinalTablas}
+                ${htmlTablaInfo}
+                <br/><br/>
+                ${clonSeguimiento.outerHTML}
             </body>
             </html>
         `;
