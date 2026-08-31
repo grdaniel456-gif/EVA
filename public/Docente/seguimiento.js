@@ -35,14 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cuerpoTabla = document.getElementById('cuerpoTabla');
         cuerpoTabla.innerHTML = '';
 
-        // Fecha de inicio: Lunes 24 Agosto 2026
         const FECHA_INICIO_PARCIAL = new Date(2026, 7, 24); 
 
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
             const genero = String(alumno.genero || '').trim().toUpperCase();
 
-            // Celdas base de datos del alumno
             tr.innerHTML = `
                 <td style="border: 1px solid #000; text-align: center;">${i + 1}</td>
                 <td style="border: 1px solid #000; text-align: center;">${alumno.matricula}</td>
@@ -86,13 +84,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // 3. RENDERIZAR LAS 4 SESIONES CON SUS CLASES Y ESTILOS DE COLOR EXPLÍCITOS
+            // RENDERIZAR LAS 4 SESIONES (L, M, X, J, V, S + SEXO + ROSA INDIVIDUAL)
             for (let s = 1; s <= 4; s++) {
                 const asistioLunes = sesiones[s].lunes;
                 const asistioJueves = sesiones[s].jueves;
 
                 tr.innerHTML += `
-                    <!-- SUBCOLUMNAS DÍAS (L, M, X, J, V, S) -->
                     <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
@@ -100,16 +97,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     <td class="bg-amarillo-dia" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;"></td>
                     
-                    <!-- SUBCOLUMNAS GÉNERO H / M -->
                     <td class="col-h-m" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'H' ? 'H' : ''}</td>
                     <td class="col-h-m" style="background-color: #fff2cc; border: 1px solid #000; text-align: center;">${genero === 'M' ? 'M' : ''}</td>
                     
-                    <!-- CASILLA ROSA (ASISTENCIA INDIVIDUAL LUNES) -->
                     <td class="bg-rosa-col" style="background-color: #ff26a8; color: #ffffff; border: 1px solid #000; text-align: center; font-weight: bold;">${asistioLunes ? '1' : ''}</td>
                 `;
             }
 
-            // COLUMNAS FINALES
             tr.innerHTML += `
                 <td style="border: 1px solid #000; text-align: center;"><small>Seleccione</small></td>
                 <td style="border: 1px solid #000; text-align: center;"><small>Seleccione</small></td>
@@ -125,32 +119,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EVENTO DE EXPORTACIÓN (LE APLICA BGCOLOR Y STYLES A TODAS LAS CELDAS)
+// EVENTO DE EXPORTACIÓN FINAL (BORDES VISIBLES Y FORMATO COMPLETO IGUAL A LA IMAGEN)
 document.getElementById('btnExportarExcel').addEventListener('click', () => {
-    const tabla = document.getElementById('tablaSeguimiento');
-    if (!tabla) {
-        alert("No se encontró la tabla para exportar.");
+    const tablaSeguimiento = document.getElementById('tablaSeguimiento');
+    const tablaInfo = document.querySelector('.tabla-info') || document.querySelector('table');
+
+    if (!tablaSeguimiento) {
+        alert("No se encontró la tabla de seguimiento.");
         return;
     }
 
-    // 1. Clonar la tabla HTML completa
-    const tablaClon = tabla.cloneNode(true);
+    const clonInfo = tablaInfo && tablaInfo !== tablaSeguimiento ? tablaInfo.cloneNode(true) : null;
+    const clonSeguimiento = tablaSeguimiento.cloneNode(true);
 
-    // 2. ENCABEZADOS DE LA TABLA
-    tablaClon.querySelectorAll('.header-parcial').forEach(el => { el.setAttribute('bgcolor', '#D9D9D9'); el.style.backgroundColor = '#D9D9D9'; });
-    tablaClon.querySelectorAll('.header-sesion').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
-    tablaClon.querySelectorAll('.header-estudiantil').forEach(el => { el.setAttribute('bgcolor', '#D9EAD3'); el.style.backgroundColor = '#D9EAD3'; });
-    tablaClon.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
-    tablaClon.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind').forEach(el => {
+    // Preparar estilos y bordes para tabla de información superior
+    if (clonInfo) {
+        clonInfo.querySelectorAll('td, th').forEach(el => {
+            el.setAttribute('border', '1');
+            el.style.border = '1px solid #000000';
+            el.style.padding = '4px';
+        });
+    }
+
+    // Preparar estilos, fondos y BORDES NEGROS VISIBLES para la tabla principal
+    clonSeguimiento.querySelectorAll('.header-parcial').forEach(el => { el.setAttribute('bgcolor', '#D9D9D9'); el.style.backgroundColor = '#D9D9D9'; });
+    clonSeguimiento.querySelectorAll('.header-sesion').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
+    clonSeguimiento.querySelectorAll('.header-estudiantil').forEach(el => { el.setAttribute('bgcolor', '#D9EAD3'); el.style.backgroundColor = '#D9EAD3'; });
+    clonSeguimiento.querySelectorAll('.bg-sub-grupal, .bg-sexo-header, .col-obs').forEach(el => { el.setAttribute('bgcolor', '#EFEFEF'); el.style.backgroundColor = '#EFEFEF'; });
+    clonSeguimiento.querySelectorAll('.bg-rosa-header, .bg-asistencia-ind').forEach(el => {
         el.setAttribute('bgcolor', '#FF26A8');
         el.style.backgroundColor = '#FF26A8';
         el.style.color = '#FFFFFF';
     });
 
-    // 3. FORCE DE COLOR EN TODAS LAS FILAS Y CELDAS DEL CUERPO (TBODY)
-    const filas = tablaClon.querySelectorAll('tbody tr');
+    // PINTADO Y DIBUJO DE BORDES FILA POR FILA
+    const filas = clonSeguimiento.querySelectorAll('tr');
     filas.forEach(fila => {
-        const celdas = fila.querySelectorAll('td');
+        const celdas = fila.querySelectorAll('th, td');
         celdas.forEach(celda => {
             if (celda.classList.contains('bg-amarillo-dia') || celda.classList.contains('col-h-m')) {
                 celda.setAttribute('bgcolor', '#FFF2CC');
@@ -160,15 +165,14 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
                 celda.style.backgroundColor = '#FF26A8';
                 celda.style.color = '#FFFFFF';
             }
+            // Forzar bordes visibles en Excel / LibreOffice
             celda.setAttribute('border', '1');
             celda.style.border = '1px solid #000000';
-            celda.style.textAlign = 'center';
             celda.style.verticalAlign = 'middle';
         });
     });
 
-    // 4. ESTRUCTURA COMPATIBLE
-    const contenidoExcel = `
+    const htmlFinal = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:x="urn:schemas-microsoft-com:office:excel" 
               xmlns="http://www.w3.org/TR/REC-html40">
@@ -189,20 +193,21 @@ document.getElementById('btnExportarExcel').addEventListener('click', () => {
             </xml>
             <![endif]-->
             <style>
-                table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; }
-                td, th { border: 1px solid #000000; text-align: center; vertical-align: middle; }
+                table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 10px; margin-bottom: 20px; }
+                td, th { border: 1px solid #000000 !important; text-align: center; vertical-align: middle; }
                 .bg-amarillo-dia, .col-h-m { background-color: #FFF2CC !important; }
-                .bg-rosa-col { background-color: #FF26A8 !important; color: #FFFFFF !important; }
+                .bg-rosa-col, .bg-rosa-header, .bg-asistencia-ind { background-color: #FF26A8 !important; color: #FFFFFF !important; }
             </style>
         </head>
         <body>
-            ${tablaClon.outerHTML}
+            ${clonInfo ? clonInfo.outerHTML : ''}
+            <br>
+            ${clonSeguimiento.outerHTML}
         </body>
         </html>
     `;
 
-    // 5. Descargar archivo .xls
-    const blob = new Blob(['\ufeff', contenidoExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const blob = new Blob(['\ufeff', htmlFinal], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
