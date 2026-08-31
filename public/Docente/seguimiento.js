@@ -35,33 +35,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cuerpoTabla = document.getElementById('cuerpoTabla');
         cuerpoTabla.innerHTML = '';
 
-        // Definir la fecha base de inicio del Parcial (Ejemplo: Lunes 24 de Agosto 2026)
-        // Ajusta esta fecha si el cuatrimestre inicia en otro día de agosto
-        const FECHA_INICIO_PARCIAL = new Date(2026, 7, 24); // 24-08-2026 (Mes 7 es Agosto)
+        // Fecha de inicio del parcial para calcular las 4 semanas/sesiones (Lunes 24 Agosto 2026)
+        const FECHA_INICIO_PARCIAL = new Date(2026, 7, 24); 
 
         alumnos.forEach((alumno, i) => {
             const tr = document.createElement('tr');
-            const genero = (alumno.genero || 'H').toUpperCase();
-            const esH = genero === 'H' ? 'H' : '';
-            const esM = genero === 'M' ? 'M' : '';
+            
+            // Determinar Género visible para la columna principal
+            const genero = String(alumno.genero || '').trim().toUpperCase();
 
+            // Celdas fijas de información del alumno
             tr.innerHTML = `
                 <td>${i + 1}</td>
                 <td>${alumno.matricula}</td>
                 <td style="text-align: left; padding-left: 5px;">${alumno.nombre}</td>
-                <td>${genero}</td>
+                <td style="font-weight: bold;">${genero}</td>
             `;
 
-            // Estructura para almacenar asistencias de las 4 sesiones
-            // { 1: {jueves: false, lunes: false}, 2: {jueves: false, lunes: false}, ... }
+            // Matriz para guardar asistencias por cada una de las 4 sesiones
             const sesiones = {
-                1: { jueves: false, lunes: false },
-                2: { jueves: false, lunes: false },
-                3: { jueves: false, lunes: false },
-                4: { jueves: false, lunes: false }
+                1: { lunes: false, jueves: false },
+                2: { lunes: false, jueves: false },
+                3: { lunes: false, jueves: false },
+                4: { lunes: false, jueves: false }
             };
 
-            // 3. PROCESAR HISTORIAL DE ASISTENCIAS Y DETERMINAR LA SESIÓN DE CADA FECHA
+            // 3. PROCESAR HISTORIAL DE ASISTENCIAS DE LA BASE DE DATOS
             if (alumno.historial_asistencias && Array.isArray(alumno.historial_asistencias)) {
                 alumno.historial_asistencias.forEach(registro => {
                     const partes = registro.split(': ');
@@ -75,40 +74,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const anio = parseInt(match[3], 10);
 
                             const fechaRegistro = new Date(anio, mes, dia);
-                            const diaSemana = fechaRegistro.getDay(); // 1: Lun, 4: Jue
+                            const diaSemana = fechaRegistro.getDay(); // 1: Lunes, 4: Jueves
 
-                            // Calcular diferencia de semanas desde la fecha de inicio
+                            // Calcular a qué semana / sesión pertenece la fecha
                             const diffTiempo = fechaRegistro.getTime() - FECHA_INICIO_PARCIAL.getTime();
                             const diffDias = Math.floor(diffTiempo / (1000 * 3600 * 24));
                             
-                            // Determinar a qué número de sesión (1 a 4) corresponde la fecha
                             let numSesion = Math.floor(diffDias / 7) + 1;
                             if (numSesion < 1) numSesion = 1;
                             if (numSesion > 4) numSesion = 4;
 
-                            // Registrar la asistencia en la sesión calculada
-                            if (diaSemana === 4) sesiones[numSesion].jueves = true;
                             if (diaSemana === 1) sesiones[numSesion].lunes = true;
+                            if (diaSemana === 4) sesiones[numSesion].jueves = true;
                         }
                     }
                 });
             }
 
-            // 4. RENDERIZAR LAS 4 SESIONES
+            // 4. GENERAR LAS 4 SESIONES
             for (let s = 1; s <= 4; s++) {
-                const dioJueves = sesiones[s].jueves;
-                const dioLunes = sesiones[s].lunes;
+                const asistioLunes = sesiones[s].lunes;
+                const asistioJueves = sesiones[s].jueves;
 
                 tr.innerHTML += `
-                    <td class="bg-amarillo-dia"></td>
-                    <td class="bg-amarillo-dia"></td>
-                    <td class="bg-amarillo-dia"></td>
-                    <td class="bg-amarillo-dia">${dioJueves ? '1' : ''}</td>
-                    <td class="bg-amarillo-dia"></td>
-                    <td class="bg-amarillo-dia"></td>
-                    <td class="bg-amarillo-dia">${dioJueves ? esH : ''}</td>
-                    <td class="bg-amarillo-dia">${dioJueves ? esM : ''}</td>
-                    <td class="bg-rosa-col">${dioLunes ? '1' : ''}</td>
+                    <!-- SUBCOLUMNAS DÍAS (L, M, X, J, V, S) -->
+                    <td class="bg-amarillo-dia"></td> <!-- L -->
+                    <td class="bg-amarillo-dia"></td> <!-- M -->
+                    <td class="bg-amarillo-dia"></td> <!-- X -->
+                    <td class="bg-amarillo-dia" style="font-weight: bold;">${asistioJueves ? '1' : ''}</td> <!-- J (Tutoría Grupal) -->
+                    <td class="bg-amarillo-dia"></td> <!-- V -->
+                    <td class="bg-amarillo-dia"></td> <!-- S -->
+                    
+                    <!-- SUBCOLUMNAS GÉNERO H / M -->
+                    <td class="bg-amarillo-dia">${genero === 'H' ? 'H' : ''}</td>
+                    <td class="bg-amarillo-dia">${genero === 'M' ? 'M' : ''}</td>
+                    
+                    <!-- CASILLA ROSA: ASISTENCIA INDIVIDUAL (REGISTRA LOS LUNES) -->
+                    <td class="bg-rosa-col" style="font-weight: bold; text-align: center;">${asistioLunes ? '1' : ''}</td>
                 `;
             }
 
@@ -123,6 +125,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
     } catch (error) {
-        console.error('Error al renderizar la vista de seguimiento:', error);
+        console.error('Error al renderizar el seguimiento:', error);
     }
 });
