@@ -147,27 +147,25 @@ if (btnExportar) {
                 const celdas = Array.from(tr.querySelectorAll('th, td'));
                 
                 if (idx === 0) {
-                    // Fila 1: Título "1. INFORMACIÓN GENERAL"
-                    // Ocupa Columna A, B y C (colspan=3) + celda fantasma transparente en D
+                    // Fila 1: Título verde "1. INFORMACIÓN GENERAL" (Abarca hasta Columna E -> A, B, C, D, E)
                     tr.innerHTML = `
-                        <td colspan="3" bgcolor="#D9EAD3" style="border: 1px solid #000000; text-align: left; padding-left: 8px;">
+                        <td colspan="5" bgcolor="#D9EAD3" style="border: 1px solid #000000; text-align: left; padding-left: 8px;">
                             <b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>
                         </td>
-                        <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
                     `;
                 } else {
                     const textoEtiqueta = celdas[0] ? celdas[0].innerText.trim() : '';
                     const textoValor = celdas[1] ? celdas[1].innerText.trim() : '';
 
-                    // Filas de datos: 
-                    // Columna A-B (colspan=2) para que la etiqueta tenga doble espacio y NO se corte
-                    // Columna C para el Valor
-                    // Columna D (Celda fantasma sin bordes ni líneas abajo)
+                    // Filas de datos (2 a 8):
+                    // - Columna A-B (colspan=2): Etiquetas en negrita
+                    // - Columna C-D (colspan=2): Valores extendidos (ej. Nombre del tutor)
+                    // - Columna E: Celda fantasma totalmente transparente sin bordes
                     tr.innerHTML = `
                         <td colspan="2" bgcolor="#F3F3F3" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
                             <b><font color="#000000">${textoEtiqueta}</font></b>
                         </td>
-                        <td bgcolor="#FFFFFF" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
+                        <td colspan="2" bgcolor="#FFFFFF" style="border: 1px solid #000000; text-align: left; padding-left: 5px;">
                             <font color="#000000">${textoValor}</font>
                         </td>
                         <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
