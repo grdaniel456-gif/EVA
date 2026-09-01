@@ -124,45 +124,59 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES Y BORDES PERFECTOS
+// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES EXACTOS DE LA PRIMERA IMAGEN
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
-        // 1. Crear un libro de trabajo nuevo
         const wb = XLSX.utils.book_new();
 
-        // 2. Extraer los datos reales del DOM
-        const tablaInfo = document.querySelector('.tabla-info');
+        // 1. OBTENER LA TABLA DE SEGUIMIENTO CONVERTIDA A HOJA
         const tablaSeguimiento = document.getElementById('tablaSeguimiento');
-
-        // Convertir la tabla 2 de seguimiento directamente a matriz de datos de SheetJS
         const wsSeguimiento = XLSX.utils.table_to_sheet(tablaSeguimiento);
 
-        // 3. DEFINIR ANCHOS DE COLUMNA EXPLICITOS (¡Así NUNCA se apretará ningún texto!)
+        // 2. DEFINIR ANCHOS EXACTOS DE COLUMNAS (Para evitar textos encima de otros)
         const anchosColumna = [
             { wch: 4 },  // N°
-            { wch: 12 }, // Matrícula
-            { wch: 35 }, // Nombre del alumno (Espacio de sobra para nombres largos)
-            { wch: 6 }   // Sexo
+            { wch: 12 }, // MATRÍCULA
+            { wch: 30 }, // NOMBRE DEL ALUMNO
+            { wch: 6 }   // SEXO
         ];
 
-        // Añadir anchos para las 36 columnas restantes de asistencias y observaciones
-        for (let i = 0; i < 36; i++) {
-            anchosColumna.push({ wch: 4 });
+        // Anchos para las 4 sesiones (9 columnas por sesión = 36 cols en total)
+        for (let s = 0; s < 4; s++) {
+            anchosColumna.push(
+                { wch: 3 }, { wch: 3 }, { wch: 3 }, { wch: 3 }, { wch: 3 }, { wch: 3 }, // L, M, X, J, V, S
+                { wch: 4 }, { wch: 4 }, // H, M
+                { wch: 14 } // ASISTENCIA INDIVIDUAL (Columna Rosa)
+            );
         }
-        anchosColumna.push({ wch: 25 }, { wch: 25 }, { wch: 25 }); // Columnas finales de observaciones
+        // Columnas de observaciones
+        anchosColumna.push({ wch: 20 }, { wch: 20 }, { wch: 20 });
         wsSeguimiento['!cols'] = anchosColumna;
 
-        // 4. APLICAR PALETA DE ESTILOS A LAS CELDAS DE SEGUIMIENTO
+        // 3. RECUPERAR EL RANGO TOTAL DE CELDAS
         const rango = XLSX.utils.decode_range(wsSeguimiento['!ref']);
+
+        // Color amarillo pastel de fondo exactamente como la primera imagen (#FFF2CC)
+        const COLOR_AMARILLO_PASTEL = "FFF2CC";
+        const COLOR_ROSA_CHILLON = "FF26A8";
+        const COLOR_VERDE_HEADER = "D9EAD3";
+        const COLOR_GRIS_HEADER = "D9D9D9";
+        const COLOR_GRIS_SUB = "EFEFEF";
 
         for (let R = rango.s.r; R <= rango.e.r; ++R) {
             for (let C = rango.s.c; C <= rango.e.c; ++C) {
                 const celdaRef = XLSX.utils.encode_cell({ r: R, c: C });
-                if (!wsSeguimiento[celdaRef]) continue;
+                
+                // Si la celda está vacía en la cuadrícula de datos, creamos el objeto para darle color de fondo
+                if (!wsSeguimiento[celdaRef]) {
+                    wsSeguimiento[celdaRef] = { t: 's', v: '' };
+                }
 
-                // Estilo base con borde delgado negro por defecto en todas las celdas
-                const estiloCelda = {
+                const celda = wsSeguimiento[celdaRef];
+
+                // Estilo base de bordes finos negros en TODAS las celdas
+                const estiloBase = {
                     border: {
                         top: { style: "thin", color: { rgb: "000000" } },
                         bottom: { style: "thin", color: { rgb: "000000" } },
@@ -170,31 +184,88 @@ if (btnExportar) {
                         right: { style: "thin", color: { rgb: "000000" } }
                     },
                     alignment: { vertical: "center", horizontal: "center" },
-                    font: { name: "Arial", sz: 9 }
+                    font: { name: "Arial", sz: 8 }
                 };
 
-                // Formatear Encabezados según la Fila R
-                if (R === 0) { // Primer Parcial
-                    estiloCelda.fill = { fgColor: { rgb: "D9D9D9" } };
-                    estiloCelda.font = { bold: true, sz: 11 };
-                } else if (R === 1) { // Sesiones e Información Estudiantil
+                // DETERMINE SI LA COLUMNA ES LA DE "ASISTENCIA INDIVIDUAL" (ROSA)
+                // Ocurre en la columna 12, 21, 30 y 39 (índices en JS: 12, 21, 30, 39)
+                const esColumnaRosa = (C >= 4 && (C - 4) % 9 === 8);
+
+                // --- COLOREADO POR SECCIONES ---
+                if (R === 0) { // Fila 1: PRIMER PARCIAL
+                    estiloBase.fill = { fgColor: { rgb: C < 4 ? COLOR_VERDE_HEADER : COLOR_GRIS_HEADER } };
+                    estiloBase.font = { bold: true, sz: 10 };
+                } 
+                else if (R === 1) { // Fila 2: SESIONES
+                    estiloBase.fill = { fgColor: { rgb: C < 4 ? COLOR_VERDE_HEADER : COLOR_GRIS_HEADER } };
+                    estiloBase.font = { bold: true, color: { rgb: (C >= 4 && !esColumnaRosa) ? "CC0000" : "000000" } };
+                } 
+                else if (R === 2) { // Fila 3: Instrucciones en rojo
                     if (C < 4) {
-                        estiloCelda.fill = { fgColor: { rgb: "D9EAD3" } };
+                        estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
+                        estiloBase.font = { bold: true };
                     } else {
-                        estiloCelda.fill = { fgColor: { rgb: "D9D9D9" } };
+                        estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
+                        estiloBase.font = { color: { rgb: "CC0000" }, sz: 7, bold: true };
                     }
-                    estiloCelda.font = { bold: true };
-                } else if (R === 2) { // Texto de instrucciones
-                    estiloCelda.font = { color: { rgb: "CC0000" }, bold: true };
-                } else if (R === 4) { // Días / H / M
-                    estiloCelda.fill = { fgColor: { rgb: "FFF2CC" } };
+                } 
+                else if (R === 3) { // Fila 4: FECHA GRUPAL / SEXO / FECHA INDIVIDUAL
+                    if (C < 4) {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
+                        estiloBase.font = { bold: true };
+                    } else if (esColumnaRosa) {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
+                        estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true, sz: 7 };
+                    } else if (C % 9 === 10 || C % 9 === 11) { // SEXO H/M
+                        estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
+                        estiloBase.font = { color: { rgb: "CC0000" }, bold: true };
+                    } else {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_GRIS_SUB } };
+                        estiloBase.font = { bold: true };
+                    }
+                } 
+                else if (R === 4) { // Fila 5: ASISTENCIA GRUPAL / H / M / INDIVIDUAL
+                    if (C < 4) {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
+                    } else if (esColumnaRosa) {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
+                        estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true, sz: 7 };
+                    } else {
+                        estiloBase.fill = { fgColor: { rgb: (C % 9 >= 4 && C % 9 <= 9) ? COLOR_AMARILLO_PASTEL : COLOR_GRIS_SUB } };
+                        if (C % 9 < 10) estiloBase.font = { color: { rgb: "CC0000" }, bold: true };
+                    }
+                } 
+                else if (R === 5) { // Fila 6: L M X J V S
+                    if (C < 4) {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
+                    } else if (esColumnaRosa) {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
+                    } else {
+                        estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
+                        estiloBase.font = { bold: true };
+                    }
+                } 
+                else { // Filas 7+ (CUADRÍCULA DE ALUMNOS Y REGISTROS)
+                    if (C < 4) {
+                        estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
+                        if (C === 2) estiloBase.alignment.horizontal = "left"; // Nombre a la izquierda
+                    } else if (esColumnaRosa) {
+                        // LA COLUMNA ROSA DE ASISTENCIA INDIVIDUAL
+                        estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
+                        estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true };
+                    } else if (C < 40) {
+                        // TODA LA ZONA DE ASISTENCIAS EN AMARILLO PASTEL
+                        estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
+                    } else {
+                        estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
+                    }
                 }
 
-                wsSeguimiento[celdaRef].s = estiloCelda;
+                celda.s = estiloBase;
             }
         }
 
-        // 5. CONSTRUIR HOJA DE INFORMACIÓN GENERAL DE FORMA LIMPIA
+        // 4. TABLA 1 (INFORMACIÓN GENERAL) EN SU PROPIA HOJA
         const datosInfo = [
             ["1. INFORMACIÓN GENERAL", ""],
             ["Periodo:", "Agosto - Diciembre 2026"],
@@ -207,44 +278,28 @@ if (btnExportar) {
         ];
 
         const wsInfo = XLSX.utils.aoa_to_sheet(datosInfo);
-        
-        // Asignar anchos amplios para la Tabla 1
         wsInfo['!cols'] = [{ wch: 24 }, { wch: 38 }];
-        wsInfo['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]; // Combinar Encabezado
+        wsInfo['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
 
-        // Estilos para la Tabla 1
         for (let R = 0; R < datosInfo.length; R++) {
             for (let C = 0; C < 2; C++) {
                 const ref = XLSX.utils.encode_cell({ r: R, c: C });
                 if (!wsInfo[ref]) continue;
 
-                if (R === 0) {
-                    wsInfo[ref].s = {
-                        fill: { fgColor: { rgb: "D9EAD3" } },
-                        font: { bold: true, sz: 11 },
-                        border: {
-                            top: { style: "thin", color: { rgb: "000000" } },
-                            bottom: { style: "thin", color: { rgb: "000000" } },
-                            left: { style: "thin", color: { rgb: "000000" } },
-                            right: { style: "thin", color: { rgb: "000000" } }
-                        }
-                    };
-                } else {
-                    wsInfo[ref].s = {
-                        fill: { fgColor: { rgb: C === 0 ? "F3F3F3" : "FFFFFF" } },
-                        font: { bold: C === 0 },
-                        border: {
-                            top: { style: "thin", color: { rgb: "000000" } },
-                            bottom: { style: "thin", color: { rgb: "000000" } },
-                            left: { style: "thin", color: { rgb: "000000" } },
-                            right: { style: "thin", color: { rgb: "000000" } }
-                        }
-                    };
-                }
+                wsInfo[ref].s = {
+                    fill: { fgColor: { rgb: R === 0 ? COLOR_VERDE_HEADER : (C === 0 ? "F3F3F3" : "FFFFFF") } },
+                    font: { bold: R === 0 || C === 0, sz: 9 },
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
             }
         }
 
-        // 6. Añadir ambas hojas al libro y descargar `.xlsx` nativo
+        // 5. GUARDAR AMBAS HOJAS EN EL ARCHIVO .XLSX
         XLSX.utils.book_append_sheet(wb, wsInfo, "Información General");
         XLSX.utils.book_append_sheet(wb, wsSeguimiento, "Seguimiento Académico");
 
