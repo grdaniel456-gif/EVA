@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES EXACTOS Y BORDES FORZADOS A TODOS LOS RANGOS
+// EXPORTADOR NATIVO A EXCEL (.XLSX) CON TRUCO DE FORZADO DE CELDAS VACÍAS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
@@ -134,7 +134,7 @@ if (btnExportar) {
         const tablaSeguimiento = document.getElementById('tablaSeguimiento');
         const wsSeguimiento = XLSX.utils.table_to_sheet(tablaSeguimiento);
 
-        // 2. DEFINIR ANCHOS EXACTOS DE COLUMNAS (Para evitar textos encima de otros)
+        // 2. DEFINIR ANCHOS EXACTOS DE COLUMNAS
         const anchosColumna = [
             { wch: 4 },  // N°
             { wch: 12 }, // MATRÍCULA
@@ -154,19 +154,16 @@ if (btnExportar) {
         anchosColumna.push({ wch: 20 }, { wch: 20 }, { wch: 20 });
         wsSeguimiento['!cols'] = anchosColumna;
 
-        // 3. RECUPERAR EL RANGO Y FORZAR ANCHO HASTA 'AQ' (ÍNDICE 42) Y FILAS TOTALES (+6)
+        // 3. OBTENER RANGO Y EXPANDIR HASTA AQ (COLUMNA 42) Y FILAS DE ALUMNOS + 6
         const rango = XLSX.utils.decode_range(wsSeguimiento['!ref']);
-        
-        // Contamos cuántos alumnos hay registrados en el DOM/Tabla para asegurar las filas de la cuadrícula
         const filasAlumnos = tablaSeguimiento.querySelectorAll('tbody tr').length || 10;
-        const totalFilasSeguimiento = filasAlumnos + 6; // 6 filas de cabecera + filas de alumnos
+        const totalFilasSeguimiento = filasAlumnos + 6;
 
-        // Forzamos el rango máximo
-        const maxColumnaAQ = 42; // AQ es la columna índice 42
+        const maxColumnaAQ = 42; // Columna AQ
         rango.e.c = Math.max(rango.e.c, maxColumnaAQ);
         rango.e.r = Math.max(rango.e.r, totalFilasSeguimiento - 1);
 
-        // Color amarillo pastel de fondo exactamente como la primera imagen (#FFF2CC)
+        // Paleta de colores
         const COLOR_AMARILLO_PASTEL = "FFF2CC";
         const COLOR_ROSA_CHILLON = "FF26A8";
         const COLOR_VERDE_HEADER = "D9EAD3";
@@ -177,14 +174,15 @@ if (btnExportar) {
             for (let C = rango.s.c; C <= rango.e.c; ++C) {
                 const celdaRef = XLSX.utils.encode_cell({ r: R, c: C });
                 
-                // Forzamos la creación explícita de celdas vacías en todo el rango A1:AQ(alumnos+6)
-                if (!wsSeguimiento[celdaRef]) {
-                    wsSeguimiento[celdaRef] = { t: 's', v: '' };
+                // --- TRUCO: SI LA CELDA NO EXISTE O ESTÁ VACÍA, LE ASIGNAMOS UN ESPACIO ---
+                // Esto "engaña" a SheetJS para que cree el nodo XML real y no ignore la celda
+                if (!wsSeguimiento[celdaRef] || wsSeguimiento[celdaRef].v === undefined || wsSeguimiento[celdaRef].v === "") {
+                    wsSeguimiento[celdaRef] = { t: 's', v: ' ' }; // Espacio para forzar el dibujado
                 }
 
                 const celda = wsSeguimiento[celdaRef];
 
-                // BORDES FINOS NEGROS OBLIGATORIOS PARA ABSOLUTAMENTE TODAS LAS CELDAS
+                // Estilo de bordes negros delgados en los 4 lados para TODAS las celdas
                 const estiloBase = {
                     border: {
                         top: { style: "thin", color: { rgb: "000000" } },
@@ -196,8 +194,7 @@ if (btnExportar) {
                     font: { name: "Arial", sz: 8 }
                 };
 
-                // DETERMINE SI LA COLUMNA ES LA DE "ASISTENCIA INDIVIDUAL" (ROSA)
-                // Ocurre en la columna 12, 21, 30 y 39 (índices en JS: 12, 21, 30, 39)
+                // Identificar columna rosa de ASISTENCIA INDIVIDUAL
                 const esColumnaRosa = (C >= 4 && (C - 4) % 9 === 8);
 
                 // --- COLOREADO POR SECCIONES Y CABECERAS ---
@@ -254,16 +251,14 @@ if (btnExportar) {
                         estiloBase.font = { bold: true };
                     }
                 } 
-                else { // Filas 7+ (CUADRÍCULA DE ALUMNOS Y REGISTROS)
+                else { // Filas 7+ (CUADRÍCULA COMPLETA DE REGISTROS)
                     if (C < 4) {
                         estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
-                        if (C === 2) estiloBase.alignment.horizontal = "left"; // Nombre a la izquierda
+                        if (C === 2) estiloBase.alignment.horizontal = "left";
                     } else if (esColumnaRosa) {
-                        // LA COLUMNA ROSA DE ASISTENCIA INDIVIDUAL
                         estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
                         estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true };
                     } else if (C < 40) {
-                        // TODA LA ZONA DE ASISTENCIAS EN AMARILLO PASTEL
                         estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
                     } else {
                         estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
@@ -274,7 +269,7 @@ if (btnExportar) {
             }
         }
 
-        // Actualizamos la referencia interna del objeto Sheet
+        // Actualizamos las dimensiones en la hoja
         wsSeguimiento['!ref'] = XLSX.utils.encode_range(rango);
 
         // 4. TABLA 1 (INFORMACIÓN GENERAL) EN SU PROPIA HOJA
