@@ -124,157 +124,130 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR CON REESTRUCTURACIÓN DE CELDAS Y BORDES LIMPIOS
+// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES Y BORDES PERFECTOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
-        const tablaInfo = document.querySelector('.tabla-info') || document.querySelectorAll('table')[0];
-        const tablaSeguimiento = document.getElementById('tablaSeguimiento') || document.querySelectorAll('table')[1];
+        // 1. Crear un libro de trabajo nuevo
+        const wb = XLSX.utils.book_new();
 
-        // 1. PROCESAR TABLA 1 (INFORMACIÓN GENERAL)
-        let htmlTablaInfo = '';
-        if (tablaInfo && tablaInfo !== tablaSeguimiento) {
-            const clonInfo = tablaInfo.cloneNode(true);
-            clonInfo.removeAttribute('border');
-            clonInfo.setAttribute('cellspacing', '0');
-            clonInfo.setAttribute('cellpadding', '5');
-            clonInfo.setAttribute('style', 'border-collapse: collapse;');
+        // 2. Extraer los datos reales del DOM
+        const tablaInfo = document.querySelector('.tabla-info');
+        const tablaSeguimiento = document.getElementById('tablaSeguimiento');
 
-            const filas = Array.from(clonInfo.querySelectorAll('tr'));
-            const totalFilas = filas.length;
+        // Convertir la tabla 2 de seguimiento directamente a matriz de datos de SheetJS
+        const wsSeguimiento = XLSX.utils.table_to_sheet(tablaSeguimiento);
 
-            filas.forEach((tr, idx) => {
-                tr.setAttribute('height', '28');
-                const celdas = Array.from(tr.querySelectorAll('th, td'));
-                
-                if (idx === 0) {
-                    // Fila 1: Título verde con borde completo a todo lo ancho de la tabla
-                    tr.innerHTML = `
-                        <td colspan="4" bgcolor="#D9EAD3" style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #000000; text-align: left; padding-left: 8px;">
-                            <b><font color="#000000" size="3">1. INFORMACIÓN GENERAL</font></b>
-                        </td>
-                        <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-                    `;
-                } else {
-                    const textoEtiqueta = celdas[0] ? celdas[0].innerText.trim() : '';
-                    const textoValor = celdas[1] ? celdas[1].innerText.trim() : '';
+        // 3. DEFINIR ANCHOS DE COLUMNA EXPLICITOS (¡Así NUNCA se apretará ningún texto!)
+        const anchosColumna = [
+            { wch: 4 },  // N°
+            { wch: 12 }, // Matrícula
+            { wch: 35 }, // Nombre del alumno (Espacio de sobra para nombres largos)
+            { wch: 6 }   // Sexo
+        ];
 
-                    // Es la última fila de datos (Mujeres: 7)
-                    const esUltimaFila = (idx === totalFilas - 1);
-                    const bordeInferior = esUltimaFila ? 'border-bottom: 1px solid #000000;' : '';
+        // Añadir anchos para las 36 columnas restantes de asistencias y observaciones
+        for (let i = 0; i < 36; i++) {
+            anchosColumna.push({ wch: 4 });
+        }
+        anchosColumna.push({ wch: 25 }, { wch: 25 }, { wch: 25 }); // Columnas finales de observaciones
+        wsSeguimiento['!cols'] = anchosColumna;
 
-                    // Estructura:
-                    // - Columna A-B (Etiquetas): Borde exterior izquierdo, borde divisor derecho.
-                    // - Columna C-D (Valores): Borde divisor izquierdo, borde exterior derecho.
-                    // - Columna E: Celda fantasma totalmente limpia y sin bordes.
-                    tr.innerHTML = `
-                        <td colspan="2" bgcolor="#F3F3F3" style="border-left: 1px solid #000000; border-right: 1px solid #000000; ${bordeInferior} text-align: left; padding-left: 5px;">
-                            <b><font color="#000000">${textoEtiqueta}</font></b>
-                        </td>
-                        <td colspan="2" bgcolor="#FFFFFF" style="border-left: 1px solid #000000; border-right: 1px solid #000000; ${bordeInferior} text-align: left; padding-left: 5px;">
-                            <font color="#000000">${textoValor}</font>
-                        </td>
-                        <td style="border: none; background: transparent;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-                    `;
+        // 4. APLICAR PALETA DE ESTILOS A LAS CELDAS DE SEGUIMIENTO
+        const rango = XLSX.utils.decode_range(wsSeguimiento['!ref']);
+
+        for (let R = rango.s.r; R <= rango.e.r; ++R) {
+            for (let C = rango.s.c; C <= rango.e.c; ++C) {
+                const celdaRef = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!wsSeguimiento[celdaRef]) continue;
+
+                // Estilo base con borde delgado negro por defecto en todas las celdas
+                const estiloCelda = {
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    },
+                    alignment: { vertical: "center", horizontal: "center" },
+                    font: { name: "Arial", sz: 9 }
+                };
+
+                // Formatear Encabezados según la Fila R
+                if (R === 0) { // Primer Parcial
+                    estiloCelda.fill = { fgColor: { rgb: "D9D9D9" } };
+                    estiloCelda.font = { bold: true, sz: 11 };
+                } else if (R === 1) { // Sesiones e Información Estudiantil
+                    if (C < 4) {
+                        estiloCelda.fill = { fgColor: { rgb: "D9EAD3" } };
+                    } else {
+                        estiloCelda.fill = { fgColor: { rgb: "D9D9D9" } };
+                    }
+                    estiloCelda.font = { bold: true };
+                } else if (R === 2) { // Texto de instrucciones
+                    estiloCelda.font = { color: { rgb: "CC0000" }, bold: true };
+                } else if (R === 4) { // Días / H / M
+                    estiloCelda.fill = { fgColor: { rgb: "FFF2CC" } };
                 }
-            });
-            htmlTablaInfo = clonInfo.outerHTML;
+
+                wsSeguimiento[celdaRef].s = estiloCelda;
+            }
         }
 
-        // 2. PROCESAR TABLA 2 (SEGUIMIENTO Y ASISTENCIA)
-        const clonSeguimiento = tablaSeguimiento.cloneNode(true);
-        clonSeguimiento.setAttribute('border', '1');
-        clonSeguimiento.setAttribute('cellspacing', '0');
-        clonSeguimiento.setAttribute('cellpadding', '4');
+        // 5. CONSTRUIR HOJA DE INFORMACIÓN GENERAL DE FORMA LIMPIA
+        const datosInfo = [
+            ["1. INFORMACIÓN GENERAL", ""],
+            ["Periodo:", "Agosto - Diciembre 2026"],
+            ["División:", "Ing. Industrial"],
+            ["Persona Tutora:", "Anselmo Charros Tlapalcoyoa"],
+            ["Semestre y grupo:", "7º \"A\""],
+            ["No. Total de estudiantes:", document.getElementById('totalEstudiantes')?.textContent || "0"],
+            ["Hombres:", document.getElementById('totalHombres')?.textContent || "0"],
+            ["Mujeres:", document.getElementById('totalMujeres')?.textContent || "0"]
+        ];
 
-        const filasSeg = clonSeguimiento.querySelectorAll('tr');
-        filasSeg.forEach((fila, idx) => {
-            if (idx < 6) fila.setAttribute('height', '32');
-            else fila.setAttribute('height', '26');
-        });
-
-        filasSeg.forEach(fila => {
-            fila.querySelectorAll('th, td').forEach(celda => {
-                celda.setAttribute('border', '1');
-                celda.style.border = '1px solid #000000';
-                
-                const textoOriginal = celda.innerText.trim();
-                const textoUpper = textoOriginal.toUpperCase();
-                const estilo = celda.getAttribute('style') || '';
-                const clase = celda.className || '';
-
-                if (
-                    textoUpper.includes('SESIÓN') || 
-                    textoUpper.includes('ESCRIBA EN LA CELDA') || 
-                    textoUpper.includes('ASISTENCIA GRUPAL') || 
-                    textoUpper === 'SEXO' || 
-                    textoUpper === 'SEXO H/M'
-                ) {
-                    celda.setAttribute('bgcolor', (textoUpper === 'SEXO' || textoUpper === 'SEXO H/M') ? '#FFF2CC' : '#EFEFEF');
-                    celda.innerHTML = `<b><font color="#FF0000">${textoOriginal}</font></b>`;
-                }
-                else if (textoUpper.includes('INFORMACIÓN ESTUDIANTIL') || clase.includes('header-estudiantil')) {
-                    celda.setAttribute('bgcolor', '#D9EAD3');
-                    celda.innerHTML = `<b><font color="#000000">${textoOriginal}</font></b>`;
-                }
-                else if (textoUpper.includes('PRIMER PARCIAL') || clase.includes('header-parcial')) {
-                    celda.setAttribute('bgcolor', '#D9D9D9');
-                    celda.innerHTML = `<b><font color="#000000">${textoOriginal}</font></b>`;
-                }
-                else if (textoUpper.includes('FECHA INDIVIDUAL') || textoUpper.includes('ASISTENCIA INDIVIDUAL') || clase.includes('bg-rosa') || estilo.includes('#ff26a8')) {
-                    celda.setAttribute('bgcolor', '#FF26A8');
-                    celda.innerHTML = `<b><font color="#FFFFFF">${textoOriginal}</font></b>`;
-                }
-                else if (clase.includes('bg-amarillo') || clase.includes('col-h-m') || estilo.includes('#fff2cc')) {
-                    celda.setAttribute('bgcolor', '#FFF2CC');
-                    if (textoOriginal !== '') celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
-                }
-                else {
-                    if (!celda.hasAttribute('bgcolor')) celda.setAttribute('bgcolor', '#FFFFFF');
-                    if (textoOriginal !== '') celda.innerHTML = `<font color="#000000">${textoOriginal}</font>`;
-                }
-            });
-        });
-
-        // 3. ESTRUCTURA EXCEL HTML NATIVA
-        const contenidoExcel = `
-            <html xmlns:o="urn:schemas-microsoft-com:office:office" 
-                  xmlns:x="urn:schemas-microsoft-com:office:excel" 
-                  xmlns="http://www.w3.org/TR/REC-html40">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-                <!--[if gte mso 9]>
-                <xml>
-                    <x:ExcelWorkbook>
-                        <x:ExcelWorksheets>
-                            <x:ExcelWorksheet>
-                                <x:Name>Seguimiento Académico</x:Name>
-                                <x:WorksheetOptions>
-                                    <x:DisplayGridlines/>
-                                </x:WorksheetOptions>
-                            </x:ExcelWorksheet>
-                        </x:ExcelWorksheets>
-                    </x:ExcelWorkbook>
-                </xml>
-                <![endif]-->
-            </head>
-            <body>
-                ${htmlTablaInfo}
-                <br/><br/>
-                ${clonSeguimiento.outerHTML}
-            </body>
-            </html>
-        `;
-
-        const blob = new Blob(['\ufeff', contenidoExcel], { type: 'application/vnd.ms-excel;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Seguimiento_Academico_7A.xls';
+        const wsInfo = XLSX.utils.aoa_to_sheet(datosInfo);
         
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Asignar anchos amplios para la Tabla 1
+        wsInfo['!cols'] = [{ wch: 24 }, { wch: 38 }];
+        wsInfo['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]; // Combinar Encabezado
+
+        // Estilos para la Tabla 1
+        for (let R = 0; R < datosInfo.length; R++) {
+            for (let C = 0; C < 2; C++) {
+                const ref = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!wsInfo[ref]) continue;
+
+                if (R === 0) {
+                    wsInfo[ref].s = {
+                        fill: { fgColor: { rgb: "D9EAD3" } },
+                        font: { bold: true, sz: 11 },
+                        border: {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        }
+                    };
+                } else {
+                    wsInfo[ref].s = {
+                        fill: { fgColor: { rgb: C === 0 ? "F3F3F3" : "FFFFFF" } },
+                        font: { bold: C === 0 },
+                        border: {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        }
+                    };
+                }
+            }
+        }
+
+        // 6. Añadir ambas hojas al libro y descargar `.xlsx` nativo
+        XLSX.utils.book_append_sheet(wb, wsInfo, "Información General");
+        XLSX.utils.book_append_sheet(wb, wsSeguimiento, "Seguimiento Académico");
+
+        XLSX.writeFile(wb, 'Seguimiento_Academico_7A.xlsx');
     });
 }
