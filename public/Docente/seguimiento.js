@@ -124,13 +124,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES Y BORDES EXACTOS
+// EXPORTADOR NATIVO A EXCEL (.XLSX) CON CUADRÍCULA COMPLETA Y COLORES FIJOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
         const wb = XLSX.utils.book_new();
 
-        // 1. OBTENER LA TABLA DE SEGUIMIENTO Y CONVERTIR A HOJA DE SHEETJS
+        // 1. OBTENER LA TABLA DE SEGUIMIENTO Y CONVERTIR A HOJA
         const tablaSeguimiento = document.getElementById('tablaSeguimiento');
         const wsSeguimiento = XLSX.utils.table_to_sheet(tablaSeguimiento);
 
@@ -150,11 +150,11 @@ if (btnExportar) {
                 { wch: 15 } // ASISTENCIA INDIVIDUAL
             );
         }
-        // Columnas finales
+        // Columnas finales de observaciones
         anchosColumna.push({ wch: 22 }, { wch: 22 }, { wch: 22 });
         wsSeguimiento['!cols'] = anchosColumna;
 
-        // 3. DEFINICIÓN DE COLORES EXACTOS DE LA PALETA
+        // 3. PALETA DE COLORES EXACTA
         const COLOR_AMARILLO_PASTEL = "FFF2CC";
         const COLOR_ROSA_CHILLON = "FF26A8";
         const COLOR_VERDE_HEADER = "D9EAD3";
@@ -167,15 +167,14 @@ if (btnExportar) {
             for (let C = rango.s.c; C <= rango.e.c; ++C) {
                 const celdaRef = XLSX.utils.encode_cell({ r: R, c: C });
 
-                // Crear objeto de celda si está vacío para dibujarle el borde
+                // Crear objeto de celda si está vacío para forzar que Excel le dibuje sus 4 bordes
                 if (!wsSeguimiento[celdaRef]) {
                     wsSeguimiento[celdaRef] = { t: 's', v: '' };
                 }
 
                 const celda = wsSeguimiento[celdaRef];
-                const valorTexto = (celda.v !== undefined && celda.v !== null) ? String(celda.v).trim() : '';
 
-                // Borde negro delgado para TODAS las celdas
+                // Borde negro delgado explícito en los 4 lados para TODAS las celdas
                 const estiloBase = {
                     border: {
                         top: { style: "thin", color: { rgb: "000000" } },
@@ -187,12 +186,12 @@ if (btnExportar) {
                     font: { name: "Arial", sz: 8 }
                 };
 
-                // Identificar columna de Asistencia Individual (Rosa)
+                // Identificar columna de Asistencia Individual (Rosa) -> Celdas 12, 21, 30 y 39
                 const esColumnaRosa = (C >= 4 && (C - 4) % 9 === 8);
 
-                // --- APLICACIÓN DE FORMATOS Y COLORES POR FILAS ---
+                // --- APLICACIÓN DE COLORES Y ESTRUCTURA POR FILAS ---
 
-                if (R === 0) { // Fila 1: PRIMER PARCIAL (Verde en A1:D1 para la imagen 2)
+                if (R === 0) { // Fila 1: PRIMER PARCIAL (Verde en A1:D1)
                     estiloBase.fill = { fgColor: { rgb: C < 4 ? COLOR_VERDE_HEADER : COLOR_GRIS_HEADER } };
                     estiloBase.font = { bold: true, sz: 10 };
                 } 
@@ -200,7 +199,7 @@ if (btnExportar) {
                     estiloBase.fill = { fgColor: { rgb: C < 4 ? COLOR_VERDE_HEADER : COLOR_GRIS_HEADER } };
                     estiloBase.font = { bold: true, color: { rgb: (C >= 4 && !esColumnaRosa) ? "CC0000" : "000000" } };
                 } 
-                else if (R === 2) { // Fila 3: Instrucciones en Rojo / N°, Matrícula, etc.
+                else if (R === 2) { // Fila 3: Instrucciones en Rojo
                     if (C < 4) {
                         estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
                         estiloBase.font = { bold: true };
@@ -216,7 +215,7 @@ if (btnExportar) {
                     } else if (esColumnaRosa) {
                         estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
                         estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true, sz: 7 };
-                    } else if ((C - 4) % 9 === 6 || (C - 4) % 9 === 7) { // SEXO
+                    } else if ((C - 4) % 9 === 6 || (C - 4) % 9 === 7) { // SEXO H/M
                         estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
                         estiloBase.font = { color: { rgb: "CC0000" }, bold: true };
                     } else {
@@ -224,7 +223,7 @@ if (btnExportar) {
                         estiloBase.font = { bold: true };
                     }
                 } 
-                else if (R === 4) { // Fila 5: ASISTENCIA GRUPAL / H / M / ASISTENCIA INDIVIDUAL
+                else if (R === 4) { // Fila 5: ASISTENCIA GRUPAL / H / M / INDIVIDUAL
                     if (C < 4) {
                         estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
                     } else if (esColumnaRosa) {
@@ -238,7 +237,7 @@ if (btnExportar) {
                         estiloBase.font = { color: { rgb: "CC0000" }, bold: true };
                     }
                 } 
-                else if (R === 5) { // Fila 6: Subcolumnas L, M, X, J, V, S
+                else if (R === 5) { // Fila 6: L, M, X, J, V, S
                     if (C < 4) {
                         estiloBase.fill = { fgColor: { rgb: COLOR_VERDE_HEADER } };
                     } else if (esColumnaRosa) {
@@ -248,28 +247,20 @@ if (btnExportar) {
                         estiloBase.font = { bold: true };
                     }
                 } 
-                else { // Filas 7 en adelante (DATOS DE ALUMNOS)
+                else { // Filas 7+ (CUADRÍCULA COMPLETA DE REGISTROS)
                     if (C < 4) {
                         estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
-                        if (C === 2) estiloBase.alignment.horizontal = "left"; // Alineación nombre
+                        if (C === 2) estiloBase.alignment.horizontal = "left"; // Nombre a la izquierda
                     } 
                     else if (esColumnaRosa) {
-                        // Si la celda rosa tiene dato (ej. el "1"), se rellena de rosa con texto blanco
-                        if (valorTexto !== '') {
-                            estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
-                            estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true };
-                        } else {
-                            estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
-                        }
+                        // TODA LA COLUMNA DE ASISTENCIA INDIVIDUAL SE MANTIENE ROSA
+                        estiloBase.fill = { fgColor: { rgb: COLOR_ROSA_CHILLON } };
+                        estiloBase.font = { color: { rgb: "FFFFFF" }, bold: true };
                     } 
                     else if (C < 40) {
-                        // SÓLO se pinta de amarillo si la celda tiene un valor (1, H, M, etc.)
-                        if (valorTexto !== '') {
-                            estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
-                            estiloBase.font = { bold: true };
-                        } else {
-                            estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
-                        }
+                        // TODA LA CUADRÍCULA DE ASISTENCIA SE MANTIENE EN AMARILLO PASTEL CON DIVISIONES
+                        estiloBase.fill = { fgColor: { rgb: COLOR_AMARILLO_PASTEL } };
+                        estiloBase.font = { bold: true };
                     } 
                     else {
                         estiloBase.fill = { fgColor: { rgb: "FFFFFF" } };
@@ -280,7 +271,7 @@ if (btnExportar) {
             }
         }
 
-        // 4. GENERAR HOJA 1: INFORMACIÓN GENERAL
+        // 4. GENERAR HOJA DE INFORMACIÓN GENERAL
         const datosInfo = [
             ["1. INFORMACIÓN GENERAL", ""],
             ["Periodo:", "Agosto - Diciembre 2026"],
@@ -314,7 +305,7 @@ if (btnExportar) {
             }
         }
 
-        // 5. GUARDAR Y DESCARGAR EL ARCHIVO REAL
+        // 5. GUARDAR Y DESCARGAR ARCHIVO `.XLSX`
         XLSX.utils.book_append_sheet(wb, wsInfo, "Información General");
         XLSX.utils.book_append_sheet(wb, wsSeguimiento, "Seguimiento Académico");
 
