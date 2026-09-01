@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES EXACTOS DE LA PRIMERA IMAGEN
+// EXPORTADOR NATIVO A EXCEL (.XLSX) CON COLORES EXACTOS Y BORDES FORZADOS A TODOS LOS RANGOS
 const btnExportar = document.getElementById('btnExportarExcel');
 if (btnExportar) {
     btnExportar.addEventListener('click', () => {
@@ -154,8 +154,17 @@ if (btnExportar) {
         anchosColumna.push({ wch: 20 }, { wch: 20 }, { wch: 20 });
         wsSeguimiento['!cols'] = anchosColumna;
 
-        // 3. RECUPERAR EL RANGO TOTAL DE CELDAS
+        // 3. RECUPERAR EL RANGO Y FORZAR ANCHO HASTA 'AQ' (ÍNDICE 42) Y FILAS TOTALES (+6)
         const rango = XLSX.utils.decode_range(wsSeguimiento['!ref']);
+        
+        // Contamos cuántos alumnos hay registrados en el DOM/Tabla para asegurar las filas de la cuadrícula
+        const filasAlumnos = tablaSeguimiento.querySelectorAll('tbody tr').length || 10;
+        const totalFilasSeguimiento = filasAlumnos + 6; // 6 filas de cabecera + filas de alumnos
+
+        // Forzamos el rango máximo
+        const maxColumnaAQ = 42; // AQ es la columna índice 42
+        rango.e.c = Math.max(rango.e.c, maxColumnaAQ);
+        rango.e.r = Math.max(rango.e.r, totalFilasSeguimiento - 1);
 
         // Color amarillo pastel de fondo exactamente como la primera imagen (#FFF2CC)
         const COLOR_AMARILLO_PASTEL = "FFF2CC";
@@ -168,14 +177,14 @@ if (btnExportar) {
             for (let C = rango.s.c; C <= rango.e.c; ++C) {
                 const celdaRef = XLSX.utils.encode_cell({ r: R, c: C });
                 
-                // Si la celda está vacía en la cuadrícula de datos, creamos el objeto para darle color de fondo
+                // Forzamos la creación explícita de celdas vacías en todo el rango A1:AQ(alumnos+6)
                 if (!wsSeguimiento[celdaRef]) {
                     wsSeguimiento[celdaRef] = { t: 's', v: '' };
                 }
 
                 const celda = wsSeguimiento[celdaRef];
 
-                // Estilo base de bordes finos negros en TODAS las celdas
+                // BORDES FINOS NEGROS OBLIGATORIOS PARA ABSOLUTAMENTE TODAS LAS CELDAS
                 const estiloBase = {
                     border: {
                         top: { style: "thin", color: { rgb: "000000" } },
@@ -191,7 +200,7 @@ if (btnExportar) {
                 // Ocurre en la columna 12, 21, 30 y 39 (índices en JS: 12, 21, 30, 39)
                 const esColumnaRosa = (C >= 4 && (C - 4) % 9 === 8);
 
-                // --- COLOREADO POR SECCIONES ---
+                // --- COLOREADO POR SECCIONES Y CABECERAS ---
                 if (R === 0) { // Fila 1: PRIMER PARCIAL
                     estiloBase.fill = { fgColor: { rgb: C < 4 ? COLOR_VERDE_HEADER : COLOR_GRIS_HEADER } };
                     estiloBase.font = { bold: true, sz: 10 };
@@ -264,6 +273,9 @@ if (btnExportar) {
                 celda.s = estiloBase;
             }
         }
+
+        // Actualizamos la referencia interna del objeto Sheet
+        wsSeguimiento['!ref'] = XLSX.utils.encode_range(rango);
 
         // 4. TABLA 1 (INFORMACIÓN GENERAL) EN SU PROPIA HOJA
         const datosInfo = [
