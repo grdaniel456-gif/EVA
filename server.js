@@ -301,17 +301,17 @@ app.get('/api/seguimiento', async (req, res) => {
     }
 });
 
-// --- 8. RUTA PARA EL SALUDO DE VOZ DE JARVIS ---
+// --- 8. RUTA PARA EL SALUDO DE VOZ DE JARVIS (Node.js Directo) ---
 app.post('/api/jarvis-welcome', (req, res) => {
     const nombreDocente = req.body.nombre || "Docente";
     const audioPath = path.join(__dirname, 'public', 'jarvis_temp.mp3');
 
-    // Comando para llamar al script de Python pasándole el nombre del docente y la ruta de salida del audio
-    const command = `python3 jarvis_voice.py "${nombreDocente}" "${audioPath}"`;
+    // Ejecución directa de Node.js invocando jarvis_voice.js
+    const command = `node jarvis_voice.js "${nombreDocente}" "${audioPath}"`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
-            console.error(`Error ejecutando Python JARVIS: ${error}`);
+            console.error(`Error ejecutando JARVIS Node.js: ${error}`);
             return res.status(500).json({ exito: false, mensaje: "Error al generar voz" });
         }
         
