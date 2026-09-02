@@ -315,6 +315,3 @@ if (btnExportar) {
 }
 
 
-document.getElementById('btnJarvis')?.addEventListener('click', () => {
-    alert('A su servicio, Señor. Protocolo JARVIS activado.');
-});

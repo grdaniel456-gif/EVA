@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS - Asistente IA</title>
+    <link rel="stylesheet" href="IA.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- Encabezado estilo WhatsApp -->
+        <header class="chat-header">
+            <div class="user-profile">
+                <a href="../seguimiento.html" class="btn-back" title="Volver"><i class="fa-solid fa-arrow-left"></i></a>
+                <div class="avatar-container">
+                    <img src="../Iron.jpg" alt="JARVIS Avatar" class="profile-pic">
+                    <span class="status-dot"></span>
+                </div>
+                <div class="user-info">
+                    <h2 class="chat-name">JARVIS</h2>
+                    <span class="chat-status">En línea</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </div>
+        </header>
+
+        <!-- Área de mensajes / Chat -->
+        <main class="chat-messages" id="chatMessages">
+            <div class="message-system">
+                <span>🔒 Los mensajes están protegidos de extremo a extremo. JARVIS a su servicio.</span>
+            </div>
+
+            <!-- Mensaje de bienvenida de JARVIS -->
+            <div class="message jarvis">
+                <div class="message-content">
+                    <p>Buenas tardes, Señor. Estoy en línea y listo para asistirlo con los registros y consultas del sistema EVA. ¿En qué le puedo ayudar hoy?</p>
+                    <span class="timestamp">19:07</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Barra inferior para escribir -->
+        <footer class="chat-input-bar">
+            <button class="icon-btn" id="attachBtn"><i class="fa-solid fa-paperclip"></i></button>
+            <input type="text" id="userInput" placeholder="Escribe un mensaje a JARVIS..." autocomplete="off">
+            <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+        </footer>
+    </div>
+
+    <script src="IA.js"></script>
+</body>
+</html>

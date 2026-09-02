@@ -1,0 +1,223 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #0b141a;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 900px;
+    height: 100vh;
+    background-color: #0b141a;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+/* Encabezado */
+.chat-header {
+    background-color: #202c33;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #2a3942;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-back {
+    color: #aebac1;
+    font-size: 1.2rem;
+    text-decoration: none;
+    margin-right: 4px;
+    transition: color 0.2s;
+}
+
+.btn-back:hover {
+    color: #ffd700;
+}
+
+.avatar-container {
+    position: relative;
+    width: 42px;
+    height: 42px;
+}
+
+.profile-pic {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #b71c1c; /* Borde rojo Iron Man */
+}
+
+.status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background-color: #00a884;
+    border-radius: 50%;
+    border: 2px solid #202c33;
+}
+
+.user-info .chat-name {
+    color: #e9edef;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.user-info .chat-status {
+    color: #8696a0;
+    font-size: 0.8rem;
+    display: block;
+}
+
+.header-actions {
+    color: #aebac1;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+/* Área de mensajes */
+.chat-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background-image: radial-gradient(#1f2c34 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: #0b141a;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message-system {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.message-system span {
+    background-color: #182229;
+    color: #8696a0;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #222d34;
+}
+
+.message {
+    display: flex;
+    max-width: 75%;
+}
+
+.message.jarvis {
+    align-self: flex-start;
+}
+
+.message.user {
+    align-self: flex-end;
+}
+
+.message-content {
+    padding: 8px 12px;
+    border-radius: 8px;
+    position: relative;
+    word-break: break-word;
+}
+
+.message.jarvis .message-content {
+    background-color: #202c33;
+    color: #e9edef;
+    border-top-left-radius: 0;
+}
+
+.message.user .message-content {
+    background-color: #005c4b; /* Verde WhatsApp */
+    color: #e9edef;
+    border-top-right-radius: 0;
+}
+
+.message p {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.timestamp {
+    font-size: 0.68rem;
+    color: #8696a0;
+    float: right;
+    margin-left: 12px;
+    margin-top: 4px;
+}
+
+/* Barra de Entrada */
+.chat-input-bar {
+    background-color: #202c33;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: #8696a0;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    color: #aebac1;
+}
+
+.chat-input-bar input {
+    flex: 1;
+    background-color: #2a3942;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: #e9edef;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.chat-input-bar input::placeholder {
+    color: #8696a0;
+}
+
+.send-btn {
+    background-color: #00a884;
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.send-btn:hover {
+    background-color: #008f6f;
+}
