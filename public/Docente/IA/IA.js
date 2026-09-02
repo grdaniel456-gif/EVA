@@ -45,9 +45,18 @@ userInput.addEventListener('keypress', (e) => {
 });
 
 
-// Obtener el nombre del docente (de la URL o de localStorage / parámetro)
+// --- LÓGICA DINÁMICA DE USUARIO PARA JARVIS ---
+// 1. Intentar obtener el nombre directamente de la URL
 const urlParams = new URLSearchParams(window.location.search);
-const nombreDocente = urlParams.get('nombre') || 'Daniel';
+let nombreDocente = urlParams.get('nombre');
+
+// 2. Si viene el nombre en la URL, se guarda en el almacenamiento del navegador
+if (nombreDocente) {
+    localStorage.setItem('nombreUsuario', nombreDocente);
+} else {
+    // 3. Si no viene en la URL, se intenta recuperar el perfil previamente guardado o se asigna 'Docente'
+    nombreDocente = localStorage.getItem('nombreUsuario') || 'Docente';
+}
 
 async function reproducirBienvenidaJarvis() {
     try {
