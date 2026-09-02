@@ -15,3 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('avatarIcon').textContent = nombre.charAt(0).toUpperCase();
     }
 });
+
+
+// Obtener el nombre de la URL al iniciar sesión y guardarlo en el navegador
+const urlParams = new URLSearchParams(window.location.search);
+const nombreDocente = urlParams.get('nombre');
+
+if (nombreDocente) {
+    localStorage.setItem('nombreUsuario', nombreDocente);
+}
