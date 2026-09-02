@@ -313,3 +313,8 @@ if (btnExportar) {
         XLSX.writeFile(wb, 'Seguimiento_Academico_7A.xlsx');
     });
 }
+
+
+document.getElementById('btnJarvis')?.addEventListener('click', () => {
+    alert('A su servicio, Señor. Protocolo JARVIS activado.');
+});

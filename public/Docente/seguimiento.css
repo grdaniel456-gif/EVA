@@ -189,3 +189,36 @@ body {
 .btn-excel:active {
     transform: scale(0.97);
 }
+
+/* --- BOTÓN EASTER EGG JARVIS (IRON MAN STYLE) --- */
+.btn-jarvis {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #b71c1c 0%, #7f0000 100%);
+  color: #ffd700; /* Dorado Stark */
+  border: 1.5px solid #ffd700;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(183, 28, 28, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-jarvis:hover {
+  background: linear-gradient(135deg, #d32f2f 0%, #9a0007 100%);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  transform: translateY(-2px);
+  color: #ffffff;
+}
+
+/* Icono miniatura */
+.jarvis-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ffd700;
+}
