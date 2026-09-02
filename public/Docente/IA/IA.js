@@ -43,3 +43,34 @@ userInput.addEventListener('keypress', (e) => {
         sendMessage();
     }
 });
+
+
+// Obtener el nombre del docente (de la URL o de localStorage / parámetro)
+const urlParams = new URLSearchParams(window.location.search);
+const nombreDocente = urlParams.get('nombre') || 'Daniel';
+
+async function reproducirBienvenidaJarvis() {
+    try {
+        const response = await fetch('/api/jarvis-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre: nombreDocente })
+        });
+
+        const data = await response.json();
+        if (data.exito && data.audioUrl) {
+            // Reproducir el audio directamente en el navegador del usuario
+            const audio = new Audio(data.audioUrl + '?t=' + new Date().getTime()); // Evitar caché
+            audio.play().catch(err => {
+                console.log("El navegador bloqueó el autoplay, se requiere interacción previa del usuario:", err);
+            });
+        }
+    } catch (err) {
+        console.error("Error conectando con JARVIS:", err);
+    }
+}
+
+// Ejecutar el saludo al entrar al chat
+document.addEventListener('DOMContentLoaded', () => {
+    reproducirBienvenidaJarvis();
+});

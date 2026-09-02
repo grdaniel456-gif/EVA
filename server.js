@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const { Pool } = require('pg');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 const app = express();
 const server = http.createServer(app);
@@ -286,6 +287,7 @@ app.get('/api/alumnos', async (req, res) => {
         res.status(500).json({ exito: false, mensaje: err.message });
     }
 });
+
 // --- RUTA PARA EL SEGUIMIENTO DE ASISTENCIAS ---
 app.get('/api/seguimiento', async (req, res) => {
     try {
@@ -299,7 +301,26 @@ app.get('/api/seguimiento', async (req, res) => {
     }
 });
 
-// --- 8. ARRANCAR SERVIDOR ---
+// --- 8. RUTA PARA EL SALUDO DE VOZ DE JARVIS ---
+app.post('/api/jarvis-welcome', (req, res) => {
+    const nombreDocente = req.body.nombre || "Docente";
+    const audioPath = path.join(__dirname, 'public', 'jarvis_temp.mp3');
+
+    // Comando para llamar al script de Python pasándole el nombre del docente y la ruta de salida del audio
+    const command = `python3 jarvis_voice.py "${nombreDocente}" "${audioPath}"`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error ejecutando Python JARVIS: ${error}`);
+            return res.status(500).json({ exito: false, mensaje: "Error al generar voz" });
+        }
+        
+        // Retornamos la URL accesible desde el cliente
+        res.json({ exito: true, audioUrl: '/jarvis_temp.mp3' });
+    });
+});
+
+// --- 9. ARRANCAR SERVIDOR ---
 server.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
