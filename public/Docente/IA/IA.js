@@ -22,18 +22,52 @@ function appendMessage(text, sender) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function sendMessage() {
+// --- CONEXIÓN CON LA API DE GEMINI ---
+async function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    // Agregar mensaje del usuario
+    // 1. Mostrar mensaje del usuario en pantalla
     appendMessage(text, 'user');
     userInput.value = '';
 
-    // Simular respuesta de JARVIS
-    setTimeout(() => {
-        appendMessage('Procesando su solicitud... (aquí puedes conectar la API o lógica deseada)', 'jarvis');
-    }, 1000);
+    // 2. Crear mensaje temporal de espera ("Pensando...")
+    const tempJarvisMsg = document.createElement('div');
+    tempJarvisMsg.classList.add('message', 'jarvis');
+    tempJarvisMsg.innerHTML = `
+        <div class="message-content">
+            <p><i>J.A.R.V.I.S. está pensando...</i></p>
+        </div>
+    `;
+    chatMessages.appendChild(tempJarvisMsg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        // 3. Petición al endpoint backend conectado a Gemini API
+        const response = await fetch('/api/jarvis-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                mensaje: text, 
+                nombre: nombreDocente 
+            })
+        });
+
+        const data = await response.json();
+        
+        // Quitar mensaje temporal de espera
+        chatMessages.removeChild(tempJarvisMsg);
+
+        if (data.exito) {
+            appendMessage(data.respuesta, 'jarvis');
+        } else {
+            appendMessage(data.respuesta || "Lo siento, ocurrió un inconveniente técnico al conectar mis redes neuronales.", 'jarvis');
+        }
+    } catch (err) {
+        chatMessages.removeChild(tempJarvisMsg);
+        appendMessage("Error de conexión al servidor JARVIS.", 'jarvis');
+        console.error("Error en chat:", err);
+    }
 }
 
 sendBtn.addEventListener('click', sendMessage);
@@ -76,7 +110,7 @@ if (nombreRaw) {
 const nombreDocente = obtenerNombreCorto(nombreRaw);
 
 
-// --- LLAMADA A LA API DE JARVIS ---
+// --- LLAMADA A LA API DE BIENVENIDA JARVIS ---
 async function reproducirBienvenidaJarvis() {
     try {
         const response = await fetch('/api/jarvis-welcome', {

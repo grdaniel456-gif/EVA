@@ -324,3 +324,36 @@ app.post('/api/jarvis-welcome', (req, res) => {
 server.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+const { GoogleGenAI } = require('@google/genai');
+
+// Inicializar el SDK de Gemini con la clave de API
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// --- RUTA API: CHAT DE JARVIS ---
+app.post('/api/jarvis-chat', async (req, res) => {
+    const { mensaje, nombre } = req.body;
+
+    if (!mensaje) {
+        return res.status(400).json({ exito: false, respuesta: "El mensaje no puede estar vacío." });
+    }
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: mensaje,
+            config: {
+                systemInstruction: `Eres J.A.R.V.I.S., un asistente virtual de IA muy eficiente, educado y con un ligero toque de ironía británica refinada. Estás integrado en el sistema escolar EVA. Te diriges al usuario como ${nombre || 'Docente'}. Ofrece respuestas directas, serviciales y concisas.`
+            }
+        });
+
+        res.json({ exito: true, respuesta: response.text });
+    } catch (error) {
+        console.error("Error al consultar Gemini API:", error);
+        res.status(500).json({ 
+            exito: false, 
+            respuesta: "Señor, he experimentado una interrupción temporal en mis servidores de procesamiento." 
+        });
+    }
+});

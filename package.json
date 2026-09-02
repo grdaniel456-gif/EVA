@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@google/genai": "^2.20.0",
     "edge-tts": "^1.0.1",
     "express": "^5.2.1",
     "nedb-promises": "^6.2.4",
