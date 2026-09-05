@@ -331,7 +331,7 @@ const { GoogleGenAI } = require('@google/genai');
 // Inicializar el SDK de Gemini con la clave de API
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// --- RUTA API: CHAT DE JARVIS ---
+/// --- RUTA API: CHAT DE JARVIS CON ACCESO A POSTGRESQL ---
 app.post('/api/jarvis-chat', async (req, res) => {
     const { mensaje, nombre } = req.body;
 
@@ -340,20 +340,73 @@ app.post('/api/jarvis-chat', async (req, res) => {
     }
 
     try {
-        const response = await ai.models.generateContent({
+        // 1. Definir la herramienta de consulta a la Base de Datos para Gemini
+        const herramientasBD = {
+            functionDeclarations: [
+                {
+                    name: 'consultarAlumno',
+                    description: 'Consulta los datos, total de asistencias e historial de un alumno en la base de datos PostgreSQL usando su matrícula o su nombre.',
+                    parameters: {
+                        type: 'OBJECT',
+                        properties: {
+                            busqueda: {
+                                type: 'STRING',
+                                description: 'Matrícula exacta (ej: 2023001) o parte del nombre del alumno (ej: Carlos).'
+                            }
+                        },
+                        required: ['busqueda']
+                    }
+                }
+            ]
+        };
+
+        // 2. Inicializar el modelo con las herramientas y la instrucción del sistema
+        const model = ai.getGenerativeModel({
             model: 'gemini-2.5-flash',
-            contents: mensaje,
-            config: {
-                systemInstruction: `Eres J.A.R.V.I.S., un asistente virtual de IA muy eficiente, educado y con un ligero toque de ironía británica refinada. Estás integrado en el sistema escolar EVA. Te diriges al usuario como ${nombre || 'Docente'}. Ofrece respuestas directas, serviciales y concisas.`
-            }
+            systemInstruction: `Eres J.A.R.V.I.S., un asistente virtual de IA educado, eficiente y servicial para el sistema escolar EVA. Te diriges al usuario como ${nombre || 'Docente'}. Si te preguntan sobre información de algún alumno, asistencias o historial, utiliza la función consultarAlumno para obtener los datos reales antes de responder.`,
+            tools: [herramientasBD]
         });
 
-        res.json({ exito: true, respuesta: response.text });
+        // 3. Iniciar chat o generar contenido
+        const chat = model.startChat();
+        let result = await chat.sendMessage(mensaje);
+        let call = result.response.functionCalls()?.[0];
+
+        // 4. Si Gemini decide llamar a la función para consultar la BD
+        if (call && call.name === 'consultarAlumno') {
+            const { busqueda } = call.args;
+
+            // Consultar PostgreSQL en la tabla 'alumnos'
+            const dbResult = await pool.query(
+                `SELECT matricula, nombre, asistencias, historial_asistencias, genero, modalidad 
+                 FROM alumnos 
+                 WHERE matricula ILIKE $1 OR nombre ILIKE $2`,
+                [`%${busqueda}%`, `%${busqueda}%`]
+            );
+
+            const respuestaBD = dbResult.rows.length > 0 
+                ? dbResult.rows 
+                : { mensaje: `No se encontraron alumnos registrados con la búsqueda: "${busqueda}".` };
+
+            // Devuelve el resultado de la BD a Gemini para que redacte la respuesta final
+            result = await chat.sendMessage([
+                {
+                    functionResponse: {
+                        name: 'consultarAlumno',
+                        response: { resultado: respuestaBD }
+                    }
+                }
+            ]);
+        }
+
+        // 5. Enviar la respuesta procesada por JARVIS al cliente
+        res.json({ exito: true, respuesta: result.response.text() });
+
     } catch (error) {
-        console.error("Error al consultar Gemini API:", error);
+        console.error("Error en la integración Gemini - PostgreSQL:", error);
         res.status(500).json({ 
             exito: false, 
-            respuesta: "Señor, he experimentado una interrupción temporal en mis servidores de procesamiento." 
+            respuesta: "Señor, he tenido un inconveniente al consultar la base de datos de los estudiantes." 
         });
     }
 });
