@@ -6,6 +6,8 @@
     <title>JARVIS - Asistente IA</title>
     <link rel="stylesheet" href="IA.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librería para renderizar Markdown (Permite que los enlaces a WhatsApp funcionen) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -19,7 +21,7 @@
                     <span class="status-dot"></span>
                 </div>
                 <div class="user-info">
-                    <h2 class="chat-name">J.A.R.V.I.S</h2>
+                    <h2 class="chat-name">JARVIS</h2>
                     <span class="chat-status">En línea</span>
                 </div>
             </div>
@@ -33,24 +35,17 @@
             <div class="message-system">
                 <span>🔒 Los mensajes están protegidos de extremo a extremo. JARVIS a su servicio.</span>
             </div>
-
-            <!-- Mensaje de bienvenida de JARVIS -->
-            <div class="message jarvis">
-                <div class="message-content">
-                    <p>Buenas tardes, Señor. Estoy en línea y listo para asistirlo con los registros y consultas del sistema EVA. ¿En qué le puedo ayudar hoy?</p>
-                    <span class="timestamp">19:07</span>
-                </div>
-            </div>
         </main>
 
         <!-- Barra inferior para escribir -->
         <footer class="chat-input-bar">
             <button class="icon-btn" id="attachBtn"><i class="fa-solid fa-paperclip"></i></button>
-            <input type="text" id="userInput" placeholder="Escribe un mensaje a J.A.R.V.I.S..." autocomplete="off">
+            <input type="text" id="userInput" placeholder="Escribe un mensaje a JARVIS..." autocomplete="off">
             <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
         </footer>
     </div>
 
-    <script src="IA.js"></script>
+    <!-- Archivo JS encargado de la comunicación con /api/jarvis-chat -->
+    <script src="IA_4.js"></script>
 </body>
 </html>

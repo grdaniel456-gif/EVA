@@ -31,6 +31,8 @@
                 <input type="text" id="reg-matricula" name="matricula" maxlength="8" pattern="[a-zA-Z0-9]{8}" title="La matrícula debe contener exactamente 8 números" placeholder="Ej. 12345678" required>
             </div>
 
+            
+
             <!-- Género -->
             <div class="input-group">
                 <label for="reg-genero">Género:</label>
@@ -49,6 +51,12 @@
                     <option value="D">Dual (D)</option>
                 </select>
             </div>
+
+            <!-- Teléfono / WhatsApp -->
+<div class="input-group">
+    <label for="reg-telefono">Número telefónico (WhatsApp):</label>
+    <input type="tel" id="reg-telefono" name="telefono" maxlength="10" pattern="\d{10}" title="Ingresa un número a 10 dígitos" placeholder="Ej. 2441234567" required>
+</div>
 
             <!-- Contraseña -->
             <div class="input-group">

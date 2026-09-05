@@ -11,9 +11,14 @@ function appendMessage(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
 
+    // Renderizar Markdown si la librería 'marked' está disponible en el HTML
+    const contentHTML = (typeof marked !== 'undefined' && sender === 'jarvis') 
+        ? marked.parse(text) 
+        : `<p>${text}</p>`;
+
     messageDiv.innerHTML = `
         <div class="message-content">
-            <p>${text}</p>
+            ${contentHTML}
             <span class="timestamp">${getFormattedTime()}</span>
         </div>
     `;
@@ -31,7 +36,7 @@ async function sendMessage() {
     appendMessage(text, 'user');
     userInput.value = '';
 
-    // 2. Crear mensaje temporal de espera ("Pensando...")
+    // 2. Crear mensaje temporal de espera
     const tempJarvisMsg = document.createElement('div');
     tempJarvisMsg.classList.add('message', 'jarvis');
     tempJarvisMsg.innerHTML = `
@@ -43,7 +48,7 @@ async function sendMessage() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
-        // 3. Petición al endpoint backend conectado a Gemini API
+        // 3. Petición al endpoint backend en server.js
         const response = await fetch('/api/jarvis-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -55,7 +60,7 @@ async function sendMessage() {
 
         const data = await response.json();
         
-        // Quitar mensaje temporal de espera
+        // Remover mensaje de espera
         chatMessages.removeChild(tempJarvisMsg);
 
         if (data.exito) {
@@ -78,20 +83,16 @@ userInput.addEventListener('keypress', (e) => {
     }
 });
 
-
 // --- LÓGICA DE RECORTE Y OBTENCIÓN DE NOMBRE ---
 function obtenerNombreCorto(nombreCompleto) {
     if (!nombreCompleto || nombreCompleto.toLowerCase() === 'docente') return 'Docente';
 
-    // Limpiar espacios extra y separar por palabras
     const palabras = nombreCompleto.trim().split(/\s+/);
 
-    // Si tiene 4 o más palabras (ej: "Juan Carlos Pérez Gómez") -> Toma los 2 primeros nombres
     if (palabras.length >= 4) {
         return `${palabras[0]} ${palabras[1]}`;
     }
 
-    // Si tiene 3 palabras o menos (ej: "Anselmo Pérez Gómez" o "María López") -> Toma solo el 1er nombre
     return palabras[0];
 }
 
@@ -109,7 +110,6 @@ if (nombreRaw) {
 // 3. Aplicar filtro para obtener 1 o 2 nombres únicamente
 const nombreDocente = obtenerNombreCorto(nombreRaw);
 
-
 // --- LLAMADA A LA API DE BIENVENIDA JARVIS ---
 async function reproducirBienvenidaJarvis() {
     try {
@@ -121,7 +121,6 @@ async function reproducirBienvenidaJarvis() {
 
         const data = await response.json();
         if (data.exito && data.audioUrl) {
-            // Reproducir audio sin caché
             const audio = new Audio(data.audioUrl + '?t=' + new Date().getTime());
             audio.play().catch(err => {
                 console.log("El navegador bloqueó el autoplay, se requiere interacción previa del usuario:", err);

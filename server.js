@@ -5,12 +5,16 @@ const path = require('path');
 const { Pool } = require('pg');
 const fs = require('fs');
 const { exec } = require('child_process');
+const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
+
+// Inicializar el SDK de Gemini
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
@@ -35,16 +39,17 @@ const inicializarBD = async () => {
             );
         `);
 
-        // 2. Asegurar que existan todas las columnas necesarias (incluyendo el historial)
+        // 2. Asegurar que existan todas las columnas necesarias (incluyendo teléfono e historial)
         await pool.query(`
             ALTER TABLE alumnos 
             ADD COLUMN IF NOT EXISTS password VARCHAR(100),
             ADD COLUMN IF NOT EXISTS genero VARCHAR(1),
             ADD COLUMN IF NOT EXISTS modalidad VARCHAR(1),
+            ADD COLUMN IF NOT EXISTS telefono VARCHAR(15),
             ADD COLUMN IF NOT EXISTS historial_asistencias TEXT[] DEFAULT '{}';
         `);
 
-        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con historial, genero y modalidad.');
+        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con historial, género, modalidad y teléfono.');
     } catch (err) {
         console.error('Error inicializando PostgreSQL:', err);
     }
@@ -79,20 +84,20 @@ io.on('connection', (socket) => {
     });
 });
 
-// --- 4. RUTA DE REGISTRO DE ALUMNOS (Letras y Números - 8 Caracteres) ---
+// --- 4. RUTA DE REGISTRO DE ALUMNOS (Con Teléfono / WhatsApp) ---
 app.post('/api/registro', async (req, res) => {
-    let { matricula, nombre, password, genero, modalidad } = req.body;
+    let { matricula, nombre, password, genero, modalidad, telefono } = req.body;
 
-    if (!matricula || !nombre || !password || !genero || !modalidad) {
+    if (!matricula || !nombre || !password || !genero || !modalidad || !telefono) {
         return res.status(400).send(`
             <h1 style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #d9534f;">
-                Todos los campos son obligatorios.
+                Todos los campos son obligatorios (incluyendo teléfono).
             </h1>
             <p style="text-align: center;"><a href="javascript:history.back()">Volver</a></p>
         `);
     }
 
-    // Validación 1: Matrícula exactamente de 8 caracteres (Letras y/o Números)
+    // Validación 1: Matrícula exactamente de 8 caracteres
     const regexMatricula = /^[a-zA-Z0-9]{8}$/;
     if (!regexMatricula.test(matricula)) {
         return res.status(400).send(`
@@ -127,10 +132,11 @@ app.post('/api/registro', async (req, res) => {
 
     try {
         await pool.query(
-            'INSERT INTO alumnos (matricula, nombre, password, genero, modalidad, asistencias, historial_asistencias) VALUES ($1, $2, $3, $4, $5, 0, $6)',
-            [matricula.toUpperCase(), nombre, password, genero, modalidad, []]
+            `INSERT INTO alumnos (matricula, nombre, password, genero, modalidad, telefono, asistencias, historial_asistencias) 
+             VALUES ($1, $2, $3, $4, $5, $6, 0, $7)`,
+            [matricula.toUpperCase(), nombre, password, genero, modalidad, telefono, []]
         );
-        // Redirección exitosa al index de inicio de sesión
+        
         return res.redirect('/index.html');
     } catch (err) {
         if (err.code === '23505') { // Clave duplicada
@@ -202,7 +208,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA CON HISTORIAL DETALLADO ---
+// --- 6. RUTA API: ESCANEO Y REGISTRO DE ASISTENCIA ---
 app.post('/api/registrar-asistencia', async (req, res) => {
     let { matricula, token } = req.body;
 
@@ -216,7 +222,6 @@ app.post('/api/registrar-asistencia', async (req, res) => {
     try {
         matricula = matricula.toUpperCase();
 
-        // 1. Obtener alumno actual
         const alumnoResult = await pool.query(
             'SELECT asistencias FROM alumnos WHERE UPPER(matricula) = $1',
             [matricula]
@@ -229,7 +234,6 @@ app.post('/api/registrar-asistencia', async (req, res) => {
         const asistenciasActuales = alumnoResult.rows[0].asistencias || 0;
         const numAsistencia = asistenciasActuales + 1;
 
-        // 2. Formatear la fecha y hora en ZONA HORARIA LOCAL (México)
         const fechaHoraLocal = new Date().toLocaleString('es-MX', {
             timeZone: 'America/Mexico_City',
             day: '2-digit',
@@ -240,13 +244,11 @@ app.post('/api/registrar-asistencia', async (req, res) => {
             hour12: false
         });
 
-        // Convierte el formato devuelto "30/08/2026, 08:35" a "30-08-2026-08:35"
         const [fechaParte, horaParte] = fechaHoraLocal.split(', ');
         const fechaFormateada = `${fechaParte.replace(/\//g, '-')}-${horaParte}`;
         
         const nuevoRegistro = `asistencia ${numAsistencia}: ${fechaFormateada}`;
 
-        // 3. Sumar +1 y agregar registro en PostgreSQL
         const updateResult = await pool.query(
             `UPDATE alumnos 
              SET asistencias = asistencias + 1,
@@ -258,7 +260,6 @@ app.post('/api/registrar-asistencia', async (req, res) => {
 
         const alumno = updateResult.rows[0];
 
-        // 4. Quemar token viejo y notificar docente
         tokenActivoActual = generarTokenUnico();
         io.emit('actualizar_qr', { 
             token: tokenActivoActual,
@@ -281,7 +282,7 @@ app.post('/api/registrar-asistencia', async (req, res) => {
 // --- 7. CONSULTAR LISTA DE ALUMNOS ---
 app.get('/api/alumnos', async (req, res) => {
     try {
-        const result = await pool.query('SELECT matricula, nombre, asistencias, genero, modalidad, historial_asistencias FROM alumnos ORDER BY nombre ASC');
+        const result = await pool.query('SELECT matricula, nombre, asistencias, genero, modalidad, telefono, historial_asistencias FROM alumnos ORDER BY nombre ASC');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ exito: false, mensaje: err.message });
@@ -292,7 +293,7 @@ app.get('/api/alumnos', async (req, res) => {
 app.get('/api/seguimiento', async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT matricula, nombre, asistencias, genero, historial_asistencias FROM alumnos'
+            'SELECT matricula, nombre, asistencias, genero, telefono, historial_asistencias FROM alumnos'
         );
         res.json(result.rows);
     } catch (err) {
@@ -301,12 +302,11 @@ app.get('/api/seguimiento', async (req, res) => {
     }
 });
 
-// --- 8. RUTA PARA EL SALUDO DE VOZ DE JARVIS (Node.js Directo) ---
+// --- 8. RUTA PARA EL SALUDO DE VOZ DE JARVIS ---
 app.post('/api/jarvis-welcome', (req, res) => {
     const nombreDocente = req.body.nombre || "Docente";
     const audioPath = path.join(__dirname, 'public', 'jarvis_temp.mp3');
 
-    // Ejecución directa de Node.js invocando jarvis_voice.js
     const command = `node jarvis_voice.js "${nombreDocente}" "${audioPath}"`;
 
     exec(command, (error, stdout, stderr) => {
@@ -314,24 +314,11 @@ app.post('/api/jarvis-welcome', (req, res) => {
             console.error(`Error ejecutando JARVIS Node.js: ${error}`);
             return res.status(500).json({ exito: false, mensaje: "Error al generar voz" });
         }
-        
-        // Retornamos la URL accesible desde el cliente
         res.json({ exito: true, audioUrl: '/jarvis_temp.mp3' });
     });
 });
 
-// --- 9. ARRANCAR SERVIDOR ---
-server.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
-
-
-const { GoogleGenAI } = require('@google/genai');
-
-// Inicializar el SDK de Gemini con la clave de API
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// --- RUTA API: CHAT DE JARVIS CON ACCESO A POSTGRESQL ---
+// --- 9. RUTA API: CHAT DE JARVIS CON ACCESO A BD Y REDIRECCIÓN A WHATSAPP ---
 app.post('/api/jarvis-chat', async (req, res) => {
     const { mensaje, nombre } = req.body;
 
@@ -340,18 +327,17 @@ app.post('/api/jarvis-chat', async (req, res) => {
     }
 
     try {
-        // 1. Declarar la herramienta (Function Calling) que conecta con PostgreSQL
         const toolConsultarAlumno = {
             functionDeclarations: [
                 {
                     name: 'consultarAlumno',
-                    description: 'Busca a un alumno en la base de datos PostgreSQL usando su nombre o matrícula y devuelve sus asistencias e historial.',
+                    description: 'Obtiene los datos de un alumno (nombre, asistencias, teléfono) usando su matrícula o parte del nombre.',
                     parameters: {
                         type: 'OBJECT',
                         properties: {
                             busqueda: {
                                 type: 'STRING',
-                                description: 'Nombre parcial del alumno (ej: Carlos) o número de matrícula (ej: 2023001).'
+                                description: 'Matrícula exacta o parte del nombre del alumno.'
                             }
                         },
                         required: ['busqueda']
@@ -360,12 +346,14 @@ app.post('/api/jarvis-chat', async (req, res) => {
             ]
         };
 
-        // 2. Definir instrucciones de personalidad y acceso a herramientas
-        const systemInstruction = `Eres J.A.R.V.I.S., un asistente virtual de IA muy eficiente, educado y con un toque refinado. 
-Estás integrado en el sistema escolar EVA y te diriges al usuario como ${nombre || 'Docente'}. 
-Si el usuario te pregunta por las asistencias, estado o datos de algún alumno, DEBES ejecutar la función consultarAlumno con el nombre o matrícula que te mencionen para obtener la información real desde la base de datos antes de responder.`;
+        const systemInstruction = `Eres J.A.R.V.I.S., un asistente de IA educado, refinado y servicial para el sistema escolar EVA. Te diriges al usuario como ${nombre || 'Docente'}.
+Reglas cuando consultes información de estudiantes:
+1. Usa 'consultarAlumno' para traer sus datos de la base de datos.
+2. Si el estudiante NO tiene asistencias registradas (0 asistencias) o presenta bajas asistencias, sugiérele amablemente al docente enviarle un mensaje por WhatsApp.
+3. Cuando proporciones el número de teléfono, represéntalo SIEMPRE como un enlace directo en formato Markdown con esta estructura exacta:
+   [Enviar WhatsApp a NOMBRE (TELÉFONO)](https://wa.me/52TELEFONO?text=Hola,%20te%20contacto%20del%20sistema%20EVA)
+   (Recuerda anteceder '52' al número de 10 dígitos).`;
 
-        // 3. Primera llamada a Gemini (evalúa si el mensaje necesita la base de datos)
         let response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: mensaje,
@@ -375,15 +363,13 @@ Si el usuario te pregunta por las asistencias, estado o datos de algún alumno, 
             }
         });
 
-        // 4. Verificar si Gemini solicita consultar la Base de Datos
         const functionCall = response.functionCalls?.[0];
 
         if (functionCall && functionCall.name === 'consultarAlumno') {
             const { busqueda } = functionCall.args;
 
-            // Ejecutamos la consulta sobre la tabla de PostgreSQL real que definiste en tu server.js
             const dbResult = await pool.query(
-                `SELECT matricula, nombre, asistencias, historial_asistencias 
+                `SELECT matricula, nombre, asistencias, telefono, historial_asistencias 
                  FROM alumnos 
                  WHERE matricula ILIKE $1 OR nombre ILIKE $2`,
                 [`%${busqueda}%`, `%${busqueda}%`]
@@ -391,9 +377,8 @@ Si el usuario te pregunta por las asistencias, estado o datos de algún alumno, 
 
             const datosBD = dbResult.rows.length > 0 
                 ? dbResult.rows 
-                : { mensaje: `No existe ningún alumno registrado bajo la búsqueda: "${busqueda}".` };
+                : { mensaje: `No se encontró ningún estudiante con la búsqueda: "${busqueda}".` };
 
-            // 5. Le devolvemos a Gemini el resultado SQL para que redacte la respuesta final al usuario
             response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: [
@@ -409,20 +394,22 @@ Si el usuario te pregunta por las asistencias, estado o datos de algún alumno, 
                         }] 
                     }
                 ],
-                config: {
-                    systemInstruction: systemInstruction
-                }
+                config: { systemInstruction: systemInstruction }
             });
         }
 
-        // 6. Enviar la respuesta procesada por JARVIS
         res.json({ exito: true, respuesta: response.text });
 
     } catch (error) {
-        console.error("Error en la integración Gemini - PostgreSQL:", error);
+        console.error("Error en Gemini + BD:", error);
         res.status(500).json({ 
             exito: false, 
-            respuesta: "Señor, he experimentado un fallo al intentar consultar la base de datos de los estudiantes." 
+            respuesta: "Señor, he experimentado una interrupción al intentar consultar la base de datos de los alumnos." 
         });
     }
+});
+
+// --- 10. ARRANCAR SERVIDOR ---
+server.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
