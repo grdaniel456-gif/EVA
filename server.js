@@ -39,17 +39,21 @@ const inicializarBD = async () => {
             );
         `);
 
-        // 2. Asegurar que existan todas las columnas necesarias (incluyendo teléfono e historial)
+        // 2. Asegurar que existan todas las columnas necesarias (incluyendo materias)
         await pool.query(`
             ALTER TABLE alumnos 
             ADD COLUMN IF NOT EXISTS password VARCHAR(100),
             ADD COLUMN IF NOT EXISTS genero VARCHAR(1),
             ADD COLUMN IF NOT EXISTS modalidad VARCHAR(1),
             ADD COLUMN IF NOT EXISTS telefono VARCHAR(15),
-            ADD COLUMN IF NOT EXISTS historial_asistencias TEXT[] DEFAULT '{}';
+            ADD COLUMN IF NOT EXISTS historial_asistencias TEXT[] DEFAULT '{}',
+            ADD COLUMN IF NOT EXISTS materias_aprobadas INT DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS materias_cursadas INT DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS materias_por_cursar INT DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS materias_reprobadas INT DEFAULT 0;
         `);
 
-        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con historial, género, modalidad y teléfono.');
+        console.log('Tabla "alumnos" en PostgreSQL inicializada correctamente con historial, teléfono y materias.');
     } catch (err) {
         console.error('Error inicializando PostgreSQL:', err);
     }
@@ -84,14 +88,17 @@ io.on('connection', (socket) => {
     });
 });
 
-// --- 4. RUTA DE REGISTRO DE ALUMNOS (Con Teléfono / WhatsApp) ---
+// --- 4. RUTA DE REGISTRO DE ALUMNOS (Con Campos de Materias) ---
 app.post('/api/registro', async (req, res) => {
-    let { matricula, nombre, password, genero, modalidad, telefono } = req.body;
+    let { 
+        matricula, nombre, password, genero, modalidad, telefono,
+        materias_aprobadas, materias_cursadas, materias_por_cursar, materias_reprobadas 
+    } = req.body;
 
     if (!matricula || !nombre || !password || !genero || !modalidad || !telefono) {
         return res.status(400).send(`
             <h1 style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #d9534f;">
-                Todos los campos son obligatorios (incluyendo teléfono).
+                Todos los campos obligatorios deben ser llenados.
             </h1>
             <p style="text-align: center;"><a href="javascript:history.back()">Volver</a></p>
         `);
@@ -130,11 +137,24 @@ app.post('/api/registro', async (req, res) => {
         `);
     }
 
+    // Parseo seguro de los contadores de materias
+    const aprobadas = parseInt(materias_aprobadas) || 0;
+    const cursadas = parseInt(materias_cursadas) || 0;
+    const porCursar = parseInt(materias_por_cursar) || 0;
+    const reprobadas = parseInt(materias_reprobadas) || 0;
+
     try {
         await pool.query(
-            `INSERT INTO alumnos (matricula, nombre, password, genero, modalidad, telefono, asistencias, historial_asistencias) 
-             VALUES ($1, $2, $3, $4, $5, $6, 0, $7)`,
-            [matricula.toUpperCase(), nombre, password, genero, modalidad, telefono, []]
+            `INSERT INTO alumnos (
+                matricula, nombre, password, genero, modalidad, telefono, 
+                asistencias, historial_asistencias,
+                materias_aprobadas, materias_cursadas, materias_por_cursar, materias_reprobadas
+            ) 
+             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $10, $11)`,
+            [
+                matricula.toUpperCase(), nombre, password, genero, modalidad, 
+                telefono, [], aprobadas, cursadas, porCursar, reprobadas
+            ]
         );
         
         return res.redirect('/index.html');
@@ -282,7 +302,11 @@ app.post('/api/registrar-asistencia', async (req, res) => {
 // --- 7. CONSULTAR LISTA DE ALUMNOS ---
 app.get('/api/alumnos', async (req, res) => {
     try {
-        const result = await pool.query('SELECT matricula, nombre, asistencias, genero, modalidad, telefono, historial_asistencias FROM alumnos ORDER BY nombre ASC');
+        const result = await pool.query(`
+            SELECT matricula, nombre, asistencias, genero, modalidad, telefono, historial_asistencias,
+                   materias_aprobadas, materias_cursadas, materias_por_cursar, materias_reprobadas 
+            FROM alumnos ORDER BY nombre ASC
+        `);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ exito: false, mensaje: err.message });
@@ -292,9 +316,11 @@ app.get('/api/alumnos', async (req, res) => {
 // --- RUTA PARA EL SEGUIMIENTO DE ASISTENCIAS ---
 app.get('/api/seguimiento', async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT matricula, nombre, asistencias, genero, telefono, historial_asistencias FROM alumnos'
-        );
+        const result = await pool.query(`
+            SELECT matricula, nombre, asistencias, genero, telefono, historial_asistencias,
+                   materias_aprobadas, materias_cursadas, materias_por_cursar, materias_reprobadas 
+            FROM alumnos
+        `);
         res.json(result.rows);
     } catch (err) {
         console.error('Error al obtener datos de seguimiento:', err);
@@ -331,7 +357,7 @@ app.post('/api/jarvis-chat', async (req, res) => {
             functionDeclarations: [
                 {
                     name: 'consultarAlumno',
-                    description: 'Obtiene los datos de un alumno (nombre, asistencias, teléfono) usando su matrícula o parte del nombre.',
+                    description: 'Obtiene los datos de un alumno (nombre, asistencias, teléfono, materias) usando su matrícula o parte del nombre.',
                     parameters: {
                         type: 'OBJECT',
                         properties: {
@@ -348,7 +374,7 @@ app.post('/api/jarvis-chat', async (req, res) => {
 
         const systemInstruction = `Eres J.A.R.V.I.S., un asistente de IA educado, refinado y servicial para el sistema escolar EVA. Te diriges al usuario como ${nombre || 'Docente'}.
 Reglas cuando consultes información de estudiantes:
-1. Usa 'consultarAlumno' para traer sus datos de la base de datos.
+1. Usa 'consultarAlumno' para traer sus datos de la base de datos (incluyendo materias aprobadas, cursadas, por cursar y reprobadas).
 2. Si el estudiante NO tiene asistencias registradas (0 asistencias) o presenta bajas asistencias, sugiérele amablemente al docente enviarle un mensaje por WhatsApp.
 3. Cuando proporciones el número de teléfono, represéntalo SIEMPRE como un enlace directo en formato Markdown con esta estructura exacta:
    [Enviar WhatsApp a NOMBRE (TELÉFONO)](https://wa.me/52TELEFONO?text=Hola,%20te%20contacto%20del%20sistema%20EVA)
@@ -369,7 +395,8 @@ Reglas cuando consultes información de estudiantes:
             const { busqueda } = functionCall.args;
 
             const dbResult = await pool.query(
-                `SELECT matricula, nombre, asistencias, telefono, historial_asistencias 
+                `SELECT matricula, nombre, asistencias, telefono, historial_asistencias,
+                        materias_aprobadas, materias_cursadas, materias_por_cursar, materias_reprobadas 
                  FROM alumnos 
                  WHERE matricula ILIKE $1 OR nombre ILIKE $2`,
                 [`%${busqueda}%`, `%${busqueda}%`]
