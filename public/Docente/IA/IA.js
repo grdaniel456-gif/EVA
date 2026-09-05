@@ -11,7 +11,7 @@ function appendMessage(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
 
-    // Renderizar Markdown si la librería 'marked' está disponible en el HTML
+    // Renderizar Markdown si la librería 'marked' está presente en el HTML
     const contentHTML = (typeof marked !== 'undefined' && sender === 'jarvis') 
         ? marked.parse(text) 
         : `<p>${text}</p>`;
@@ -27,16 +27,16 @@ function appendMessage(text, sender) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// --- CONEXIÓN CON LA API DE GEMINI ---
+// --- CONEXIÓN REAL CON LA API DE GEMINI EN SERVER.JS ---
 async function sendMessage() {
     const text = userInput.value.trim();
     if (!text) return;
 
-    // 1. Mostrar mensaje del usuario en pantalla
+    // 1. Mostrar mensaje del usuario en la pantalla
     appendMessage(text, 'user');
     userInput.value = '';
 
-    // 2. Crear mensaje temporal de espera
+    // 2. Crear mensaje temporal de espera ("Pensando...")
     const tempJarvisMsg = document.createElement('div');
     tempJarvisMsg.classList.add('message', 'jarvis');
     tempJarvisMsg.innerHTML = `
@@ -48,7 +48,7 @@ async function sendMessage() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
-        // 3. Petición al endpoint backend en server.js
+        // 3. Petición POST al servidor
         const response = await fetch('/api/jarvis-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,7 @@ async function sendMessage() {
 
         const data = await response.json();
         
-        // Remover mensaje de espera
+        // Remover mensaje temporal de espera
         chatMessages.removeChild(tempJarvisMsg);
 
         if (data.exito) {
@@ -75,15 +75,17 @@ async function sendMessage() {
     }
 }
 
+// --- EVENT LISTENERS PARA ENVÍO ---
 sendBtn.addEventListener('click', sendMessage);
 
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
+        e.preventDefault(); // Evita recargar la página o comportamientos raros
         sendMessage();
     }
 });
 
-// --- LÓGICA DE RECORTE Y OBTENCIÓN DE NOMBRE ---
+// --- LÓGICA DE RECORTE Y OBTENCIÓN DE NOMBRE DE USUARIO ---
 function obtenerNombreCorto(nombreCompleto) {
     if (!nombreCompleto || nombreCompleto.toLowerCase() === 'docente') return 'Docente';
 
@@ -107,10 +109,10 @@ if (nombreRaw) {
     nombreRaw = localStorage.getItem('nombreUsuario') || 'Docente';
 }
 
-// 3. Aplicar filtro para obtener 1 o 2 nombres únicamente
+// 3. Nombre filtrado
 const nombreDocente = obtenerNombreCorto(nombreRaw);
 
-// --- LLAMADA A LA API DE BIENVENIDA JARVIS ---
+// --- SALUDO DE VOZ DE BIENVENIDA DE JARVIS ---
 async function reproducirBienvenidaJarvis() {
     try {
         const response = await fetch('/api/jarvis-welcome', {
@@ -131,7 +133,7 @@ async function reproducirBienvenidaJarvis() {
     }
 }
 
-// Ejecutar el saludo al entrar al chat
+// Ejecutar bienvenida al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     reproducirBienvenidaJarvis();
 });
