@@ -331,7 +331,7 @@ const { GoogleGenAI } = require('@google/genai');
 // Inicializar el SDK de Gemini con la clave de API
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-/// --- RUTA API: CHAT DE JARVIS CON ACCESO A POSTGRESQL ---
+// --- RUTA API: CHAT DE JARVIS CON ACCESO A POSTGRESQL ---
 app.post('/api/jarvis-chat', async (req, res) => {
     const { mensaje, nombre } = req.body;
 
@@ -340,18 +340,18 @@ app.post('/api/jarvis-chat', async (req, res) => {
     }
 
     try {
-        // 1. Definir la herramienta de consulta a la Base de Datos para Gemini
-        const herramientasBD = {
+        // 1. Declarar la herramienta (Function Calling) que conecta con PostgreSQL
+        const toolConsultarAlumno = {
             functionDeclarations: [
                 {
                     name: 'consultarAlumno',
-                    description: 'Consulta los datos, total de asistencias e historial de un alumno en la base de datos PostgreSQL usando su matrícula o su nombre.',
+                    description: 'Busca a un alumno en la base de datos PostgreSQL usando su nombre o matrícula y devuelve sus asistencias e historial.',
                     parameters: {
                         type: 'OBJECT',
                         properties: {
                             busqueda: {
                                 type: 'STRING',
-                                description: 'Matrícula exacta (ej: 2023001) o parte del nombre del alumno (ej: Carlos).'
+                                description: 'Nombre parcial del alumno (ej: Carlos) o número de matrícula (ej: 2023001).'
                             }
                         },
                         required: ['busqueda']
@@ -360,53 +360,69 @@ app.post('/api/jarvis-chat', async (req, res) => {
             ]
         };
 
-        // 2. Inicializar el modelo con las herramientas y la instrucción del sistema
-        const model = ai.getGenerativeModel({
+        // 2. Definir instrucciones de personalidad y acceso a herramientas
+        const systemInstruction = `Eres J.A.R.V.I.S., un asistente virtual de IA muy eficiente, educado y con un toque refinado. 
+Estás integrado en el sistema escolar EVA y te diriges al usuario como ${nombre || 'Docente'}. 
+Si el usuario te pregunta por las asistencias, estado o datos de algún alumno, DEBES ejecutar la función consultarAlumno con el nombre o matrícula que te mencionen para obtener la información real desde la base de datos antes de responder.`;
+
+        // 3. Primera llamada a Gemini (evalúa si el mensaje necesita la base de datos)
+        let response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            systemInstruction: `Eres J.A.R.V.I.S., un asistente virtual de IA educado, eficiente y servicial para el sistema escolar EVA. Te diriges al usuario como ${nombre || 'Docente'}. Si te preguntan sobre información de algún alumno, asistencias o historial, utiliza la función consultarAlumno para obtener los datos reales antes de responder.`,
-            tools: [herramientasBD]
+            contents: mensaje,
+            config: {
+                systemInstruction: systemInstruction,
+                tools: [toolConsultarAlumno]
+            }
         });
 
-        // 3. Iniciar chat o generar contenido
-        const chat = model.startChat();
-        let result = await chat.sendMessage(mensaje);
-        let call = result.response.functionCalls()?.[0];
+        // 4. Verificar si Gemini solicita consultar la Base de Datos
+        const functionCall = response.functionCalls?.[0];
 
-        // 4. Si Gemini decide llamar a la función para consultar la BD
-        if (call && call.name === 'consultarAlumno') {
-            const { busqueda } = call.args;
+        if (functionCall && functionCall.name === 'consultarAlumno') {
+            const { busqueda } = functionCall.args;
 
-            // Consultar PostgreSQL en la tabla 'alumnos'
+            // Ejecutamos la consulta sobre la tabla de PostgreSQL real que definiste en tu server.js
             const dbResult = await pool.query(
-                `SELECT matricula, nombre, asistencias, historial_asistencias, genero, modalidad 
+                `SELECT matricula, nombre, asistencias, historial_asistencias 
                  FROM alumnos 
                  WHERE matricula ILIKE $1 OR nombre ILIKE $2`,
                 [`%${busqueda}%`, `%${busqueda}%`]
             );
 
-            const respuestaBD = dbResult.rows.length > 0 
+            const datosBD = dbResult.rows.length > 0 
                 ? dbResult.rows 
-                : { mensaje: `No se encontraron alumnos registrados con la búsqueda: "${busqueda}".` };
+                : { mensaje: `No existe ningún alumno registrado bajo la búsqueda: "${busqueda}".` };
 
-            // Devuelve el resultado de la BD a Gemini para que redacte la respuesta final
-            result = await chat.sendMessage([
-                {
-                    functionResponse: {
-                        name: 'consultarAlumno',
-                        response: { resultado: respuestaBD }
+            // 5. Le devolvemos a Gemini el resultado SQL para que redacte la respuesta final al usuario
+            response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [
+                    { role: 'user', parts: [{ text: mensaje }] },
+                    { role: 'model', parts: [{ functionCall: functionCall }] },
+                    { 
+                        role: 'user', 
+                        parts: [{ 
+                            functionResponse: {
+                                name: 'consultarAlumno',
+                                response: { resultado: datosBD }
+                            }
+                        }] 
                     }
+                ],
+                config: {
+                    systemInstruction: systemInstruction
                 }
-            ]);
+            });
         }
 
-        // 5. Enviar la respuesta procesada por JARVIS al cliente
-        res.json({ exito: true, respuesta: result.response.text() });
+        // 6. Enviar la respuesta procesada por JARVIS
+        res.json({ exito: true, respuesta: response.text });
 
     } catch (error) {
         console.error("Error en la integración Gemini - PostgreSQL:", error);
         res.status(500).json({ 
             exito: false, 
-            respuesta: "Señor, he tenido un inconveniente al consultar la base de datos de los estudiantes." 
+            respuesta: "Señor, he experimentado un fallo al intentar consultar la base de datos de los estudiantes." 
         });
     }
 });
