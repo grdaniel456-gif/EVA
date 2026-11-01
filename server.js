@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- 1. CONEXIÓN E INICIALIZACIÓN DE POSTGRESQL ---
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://eva_db_n0jc_user:zosdPzPXVx0e8Rw8ePgibu144pkn8WYX@dpg-da9io1hf2nfc73fmjdeg-a/eva_db_n0jc',
+    connectionString: process.env.DATABASE_URL || 'postgresql://eva_uk7l_user:cVrTV3WWn1AKrbVB050wNvISTZGuhaxH@dpg-dbjav1nlk1mc738nufcg-a/eva_uk7l',
     ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
